@@ -158,7 +158,6 @@ class NNetwork:
             self.results.update({i: self.predictors[i].tolist()})
             self.results[i] = self.predictors[i].tolist()
 
-
     def display_results(self):
         print(self.results)
         return self.results
