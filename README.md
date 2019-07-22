@@ -24,4 +24,15 @@ directory and it will contain 3 items:
 2. A **scalers.save** file containing the saved scaling parameters of the input and output datasets
 3. A **network_weights** directory including 100 files with the saved weights of each network after training
 
+#### Libraries
+
+Install the following libraries for the Network to work:
+1. keras
+2. Tensorflow
+3. numpy
+4. matplotlib
+5. pandas
+6. sklearn
+7. Pillow
+8. xlrd
 
