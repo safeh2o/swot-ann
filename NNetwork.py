@@ -68,7 +68,7 @@ class NNetwork:
         self.model.compile(loss='mse', optimizer="adam", metrics=['mse'])
 
     def import_pretrained_model(self, path):
-        json_architecture = open(path + '\\' + 'model1.json', 'r')
+        json_architecture = open(path + '\\' + 'architecture.json', 'r')
         network_architecture = json_architecture.read()
         json_architecture.close()
 
@@ -284,7 +284,7 @@ class NNetwork:
             os.mkdir(directory + '\\' + 'network_weights')
 
         model_json = self.model.to_json()
-        with open(directory + '\\' + "model1.json", 'w') as json_file:
+        with open(directory + '\\' + "architecture.json", 'w') as json_file:
             json_file.write(model_json)
 
         json_file.close()
