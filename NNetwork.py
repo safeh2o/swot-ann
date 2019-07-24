@@ -4,6 +4,7 @@ import os
 import keras
 import base64
 import io
+from yattag import Doc
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +17,6 @@ from sklearn.metrics import r2_score
 from pandas import ExcelWriter
 
 from mpl_toolkits.mplot3d import Axes3D
-
 
 class NNetwork:
     def __init__(self):
@@ -141,10 +141,12 @@ class NNetwork:
         self.outputs = self.file.loc[:, 'se4_frc'].values.reshape(-1, 1)
 
     def predict(self):
+        prob = []
+        results = {}
+
         input_scaler = self.predictors_scaler
         inputs_norm = input_scaler.transform(self.predictors)
 
-        results = {}
         for j, network in enumerate(self.pretrained_networks):
             key = "se4_frc_net-" + str(j)
             y_norm = network.predict(inputs_norm)
@@ -157,6 +159,18 @@ class NNetwork:
         for i in self.predictors.keys():
             self.results.update({i: self.predictors[i].tolist()})
             self.results[i] = self.predictors[i].tolist()
+
+        print(len(self.results["median"]))
+        for k in range(len(self.results['median'])):
+            row = self.results.iloc[k, 0:100].to_numpy()
+            count = 0
+            for j in row:
+                if j <= 0.2:
+                    count += 1
+            p = count/len(row)
+            prob.append(p)
+            print(len(prob))
+        self.results["probability"] = prob
 
     def display_results(self):
         print(self.results)
@@ -320,7 +334,7 @@ class NNetwork:
         my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_jpgData
 
-    def generate_table(self, wt, c):
+    def set_inputs_for_table(self, wt, c):
         frc = np.linspace(0.2, 2, 37)
         watt = []
         cond = []
@@ -329,18 +343,10 @@ class NNetwork:
             cond.append(c)
         temp = {"se1_frc": frc, "se1_wattemp": watt, "se1_cond": cond}
         self.predictors = pd.DataFrame(temp)
-        self.predict()
-
-        prob = []
-        for i in range(len(frc)):
-            row = self.results.iloc[i, 0:100].to_numpy()
-            count = 0
-            for j in row:
-                if j <= 0.2:
-                    count += 1
-            p = count/len(row)
-            prob.append(p)
-        self.results["probability"] = prob
 
     def generate_html_report(self):
-        pass
+        doc, tag, text, line = Doc().ttl()
+        with tag('h1'):
+            text('Hello World')
+
+        print(doc.getvalue())
