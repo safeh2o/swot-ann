@@ -34,6 +34,24 @@ After a pre-trained model is successfully imported, the inputs that will be used
 must be specified. To import input data from a .csv file use `import_data_from_csv(filename)`, specifying
 the name of the csv file containing the inputs, with the parameter `filename`.
 
+### Scripts
+
+#### run_swot_script
+
+This script makes predictions on inputs from a csv file, using a pretrained SWOT network and 
+outputs the results in the console and saves the results in a csv file. This script is called by
+the command line. The script can be called using the following command:
+
+`python run_swot_script arg1 arg2 arg3`
+
+where:
+1. arg1: The csv file containing the inputs (ex. SWOTAllData.csv)
+2. arg2: The directory containing the pretrained models (ex. untitled_network)
+3. arg3: The output csv file (ex. results.csv)
+
+i.e. `python run_swot_script SWOTAllData.csv untitled_network results.csv`
+`
+
 #### Libraries
 
 Install the following libraries for the Network to work:
