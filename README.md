@@ -24,6 +24,16 @@ directory and it will contain 3 items:
 2. A **scalers.save** file containing the saved scaling parameters of the input and output datasets
 3. A **network_weights** directory including 100 files with the saved weights of each network after training
 
+#### Using the Pre-trained Networks
+
+Once a train network exists in a directory, it can be loaded through an empty instance of the NNetwork class.
+To load the desired network use `import_pretrained_model(directory)` with `directory` being the
+directory of the saved, pre-trained network.
+
+After a pre-trained model is successfully imported, the inputs that will be used to make predictions,
+must be specified. To import input data from a .csv file use `import_data_from_csv(filename)`, specifying
+the name of the csv file containing the inputs, with the parameter `filename`.
+
 #### Libraries
 
 Install the following libraries for the Network to work:

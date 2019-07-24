@@ -1,7 +1,8 @@
+import sys
 from NNetwork import NNetwork
 
-filename = "..\SWOTAllData.csv"
 SWOT_net = NNetwork()
+filename = sys.argv[1]
 
 '''The following lines train a network from 
 data written a .csv format. The trained network is saved 
