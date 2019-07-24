@@ -170,7 +170,6 @@ class NNetwork:
     def export_results_to_csv(self, filename):
         self.results.to_csv(filename, index=False)
 
-
     def prepare_results_for_display(self):
         j = self.predictions.tolist()
         temp = sum(j, [])
