@@ -63,4 +63,5 @@ Install the following libraries for the Network to work:
 6. sklearn
 7. Pillow
 8. xlrd
+9. Yattag
 

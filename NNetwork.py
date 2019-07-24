@@ -349,4 +349,4 @@ class NNetwork:
         with tag('h1'):
             text('Hello World')
 
-        print(doc.getvalue())
+        return doc.getvalue()
