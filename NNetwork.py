@@ -193,8 +193,6 @@ class NNetwork:
         self.results.update({"se4_frc": temp})
 
     def generate_model_performance(self):
-        """Displays plots of the network performance.
-             Still under implementation."""
 
         '''y_train_norm = self.model.predict(self.predictors_train_normalized)
         y_train = self.outputs_scaler.inverse_transform(y_train_norm)
