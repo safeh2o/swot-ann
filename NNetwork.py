@@ -126,6 +126,7 @@ class NNetwork:
 
     def import_data_from_excel(self, filename, sheet=0):
         df = pd.read_excel(filename, sheet_name=sheet).dropna()
+        # df = df.drop(df[df['sb_sunshade'] == 1].index)
         # df = df.drop(df[df["se1_frc"] > 2].index)
         self.file = df
 
@@ -141,7 +142,10 @@ class NNetwork:
         self.outputs = self.file.loc[:, 'se4_frc'].values.reshape(-1, 1)
 
     def predict(self):
-        prob = []
+        prob_02 = []
+        prob_025 = []
+        prob_03 = []
+
         results = {}
 
         input_scaler = self.predictors_scaler
@@ -163,14 +167,26 @@ class NNetwork:
         print(len(self.results["median"]))
         for k in range(len(self.results['median'])):
             row = self.results.iloc[k, 0:100].to_numpy()
-            count = 0
+            count_02 = 0
+            count_025 = 0
+            count_03 = 0
             for j in row:
                 if j <= 0.2:
-                    count += 1
-            p = count/len(row)
-            prob.append(p)
-            print(len(prob))
-        self.results["probability"] = prob
+                    count_02 += 1
+                if j <= 0.25:
+                    count_025 += 1
+                if j <= 0.3:
+                    count_03 +=1
+
+            p02 = count_02/len(row)
+            p025 = count_025/len(row)
+            p03 = count_03/len(row)
+            prob_02.append(p02)
+            prob_025.append(p025)
+            prob_03.append(p03)
+        self.results["probability<=0.20"] = prob_02
+        self.results["probability<=0.25"] = prob_025
+        self.results["probability<=0.30"] = prob_03
 
     def display_results(self):
         print(self.results)
@@ -252,7 +268,7 @@ class NNetwork:
 
         plt.close()
 
-    def generate_scatterplot(self):
+    def generate_3d_scatterplot(self):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
@@ -280,6 +296,144 @@ class NNetwork:
                                        spacing='proportional', ticks=bounds, boundaries=bounds)
 
         plt.show()
+
+    def generate_2d_scatterplot(self):
+        df = self.results
+        # df = pd.read_excel('results.xlsx')
+        df = df.drop(df[df["se1_frc"] > 2.8].index)
+
+        frc = df["se1_frc"]
+        watt = df["se1_wattemp"]
+        cond = df["se1_cond"]
+        c = df["median"]
+
+        sorted_data = np.sort(c)
+
+        if min(c) < 0:
+            lo_limit = 0
+        else:
+            lo_limit = round(min(c),2)
+            print(lo_limit)
+
+        if max(c) <= 0.75:
+            divisions = 16
+            hi_limit = 0.75
+        elif max(c) < 1:
+            divisions = 21
+            hi_limit = 1
+        elif max(c) <= 1.5:
+            divisions = 31
+            hi_limit = 1.5
+        elif max(c) <= 2:
+            divisions = 41
+            hi_limit = 2
+
+        divisions = round((hi_limit-lo_limit)/0.05,0) + 1
+        print(divisions)
+
+        sorted_data = sorted_data[sorted_data > lo_limit]
+        sorted_data = sorted_data[sorted_data < hi_limit]
+
+        cmap = plt.cm.jet_r
+        cmaplist = [cmap(i) for i in range(cmap.N)]
+        cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
+        bounds = np.linspace(0, 1.4, 8)
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+
+        fig = plt.figure()
+
+        ax = fig.add_subplot(221)
+        img = ax.scatter(frc, watt, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
+        ax.set_xlabel('FRC at se1 (mg/L)')
+        ax.set_ylabel('Water Temperature (' + u"\u00b0" + 'C)')
+        ax.grid(linewidth=0.2)
+
+        ax = fig.add_subplot(222)
+        img = ax.scatter(frc, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
+        ax.set_xlabel('FRC at se1 (mg/L)')
+        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.grid(linewidth=0.2)
+
+        ax = fig.add_subplot(223)
+        img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
+        ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
+        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.grid(linewidth=0.2)
+
+        ax = fig.add_subplot(224)
+        img = ax.hist(c, bins=np.linspace(lo_limit,hi_limit,divisions), edgecolor='black', linewidth=0.1)
+        ax.grid(linewidth=0.1)
+        line02 = ax.axvline(0.2, color='r', linestyle='dashed', linewidth=2)
+        line03 = ax.axvline(0.3, color='y', linestyle='dashed', linewidth=2)
+        ax.set_xlabel('FRC at se4 (mg/L)')
+        ax.set_ylabel('# of instances')
+
+        axcdf = ax.twinx()
+        cdf, = axcdf.step(sorted_data, np.arange(sorted_data.size), color='g')
+        ax.legend((line02, line03, cdf), ('0.2 mg/L', '0.3 mg/L', 'CDF'), loc='center right')
+
+        ax2 = fig.add_axes([0.93, 0.1, 0.01, 0.75])
+        cb = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
+                                       spacing='proportional', ticks=bounds, boundaries=bounds)
+        cb.ax.set_ylabel('FRC at se4 (mg/L)', rotation=270, labelpad=20)
+
+        # plt.show()
+
+        myStringIOBytes = io.BytesIO()
+        plt.savefig(myStringIOBytes, format='jpg')
+        myStringIOBytes.seek(0)
+        my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
+        return my_base_64_jpgData
+
+    def generate_input_info_plots(self):
+
+        df = self.predictors
+        # df = df.drop(df[df["se1_frc"] > 2.8].index)
+        frc = df["se1_frc"]
+        watt = df["se1_wattemp"]
+        cond = df["se1_cond"]
+
+        fig = plt.figure()
+
+        fig.suptitle('Total samples: '+ str(len(frc)))
+
+        ax = fig.add_subplot(221)
+        ax.hist(frc, bins=20, edgecolor='black', linewidth=0.1)
+        ax.set_xlabel('FRC at se1 (mg/L)')
+        ax.set_ylabel('# of instances')
+        mean = round(np.mean(frc), 2)
+        median = np.median(frc)
+        mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
+        median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
+        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' mg/L', 'Median: ' + str(median) + ' mg/L'))
+
+        ax = fig.add_subplot(222)
+        ax.hist(watt, bins= 20, edgecolor='black', linewidth=0.1)
+        ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
+        ax.set_ylabel('# of instances')
+        mean = round(np.mean(watt), 2)
+        median = np.median(watt)
+        mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
+        median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
+        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + u"\u00b0" + 'C', 'Median: ' + str(median) + u"\u00b0" + 'C'))
+
+        ax = fig.add_subplot(223)
+        ax.hist(cond, bins=20, edgecolor='black', linewidth=0.1)
+        ax.set_xlabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('# of instances')
+        mean = round(np.mean(cond), 2)
+        median = np.median(cond)
+        mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
+        median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
+        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
+
+        # plt.show()
+
+        myStringIOBytes = io.BytesIO()
+        plt.savefig(myStringIOBytes, format='jpg')
+        myStringIOBytes.seek(0)
+        my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
+        return my_base_64_jpgData
 
     def train_SWOT_network(self, directory='untitled_network'):
 
@@ -342,9 +496,47 @@ class NNetwork:
         temp = {"se1_frc": frc, "se1_wattemp": watt, "se1_cond": cond}
         self.predictors = pd.DataFrame(temp)
 
-    def generate_html_report(self):
+    def generate_html_report(self, filename):
+
+        input_plot_b64_graph = self.generate_input_info_plots().decode('UTF-8')
+        scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
+        html_table = self.prepare_table_for_html_report()
+
         doc, tag, text, line = Doc().ttl()
-        with tag('h1'):
-            text('Hello World')
+        with tag('h1', klass='title'):
+            text('SWOT report')
+        with tag('p', klass='summary'):
+            text('This is a summary of the SWOT run you requested')
+        with tag('p'):
+            text('Inputs specified:')
+        with tag('div', id='inputs_graphs'):
+            doc.stag('img', src='data:image/png;base64, ' + input_plot_b64_graph)
+        with tag('div', klass='results_graph'):
+            doc.stag('img', src='data:image/png;base64, ' + scatterplots_b64)
+        doc.asis(html_table)
+
+        file = open(filename, 'w+')
+        file.write(doc.getvalue())
+        file.close()
 
         return doc.getvalue()
+
+    def prepare_table_for_html_report(self):
+
+        temp = self.results
+
+        table_df = pd.DataFrame()
+        table_df['Input FRC (mg/L)'] = self.results['se1_frc']
+        table_df['Water Temperature (oC)'] = self.results['se1_wattemp']
+        table_df['Water Conductivity (10^-6 S/cm)'] = self.results['se1_cond']
+        table_df['Median Predicted FRC level at Se4 (mg/L)'] = self.results['median']
+        table_df['Probability of predicted FRC level to be less than 0.20 mg/L'] = self.results['probability<=0.20']
+        table_df['Probability of predicted FRC level to be less than 0.25 mg/L'] = self.results['probability<=0.25']
+        table_df['Probability of predicted FRC level to be less than 0.30 mg/L'] = self.results['probability<=0.30']
+
+
+        str_io = io.StringIO()
+
+        html = table_df.to_html(buf=str_io, classes='tabular_results')
+        html_str = str_io.getvalue()
+        return html_str
