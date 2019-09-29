@@ -5,10 +5,9 @@ import numpy as np
 
 SWOT_net = NNetwork()
 input_file = sys.argv[1]
-pretrained_network_dir = sys.argv [2]
+pretrained_network_dir = sys.argv[2]
 results_file = sys.argv[3]
 report_file = sys.argv[4]
-
 
 file = pd.read_excel(input_file)
 
@@ -33,7 +32,7 @@ elif 'ts_frc' in file.columns:
 med_temp = np.median(file[WATTEMP].dropna().to_numpy())
 med_cond = np.median(file[COND].dropna().to_numpy())
 
-SWOT_net.import_data_from_excel(input_file)
+SWOT_net.import_data_from_csv(input_file)
 SWOT_net.set_inputs_for_table(med_temp ,med_cond)
 SWOT_net.import_pretrained_model(pretrained_network_dir)
 SWOT_net.predict()
