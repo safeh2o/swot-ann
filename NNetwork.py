@@ -86,23 +86,23 @@ class NNetwork:
 
         # Look in the pretrained-net directory for the JSON file that contains
         # the NN architecture and load it.
-        json_architecture = open(directory + '\\' + 'architecture.json', 'r')
+        json_architecture = open(directory + os.sep + 'architecture.json', 'r')
         network_architecture = json_architecture.read()
         json_architecture.close()
 
         # Load all the pretrained networks and store them in an array
         # called self.pretrained_networks (see __init__).
-        pretrained_networks = os.listdir(directory + "\\network_weights")
+        pretrained_networks = os.listdir(directory + os.sep + "network_weights")
         for network in pretrained_networks:
             temp = keras.models.model_from_json(network_architecture)
-            temp.load_weights(directory + '\\network_weights' + '\\' + network)
+            temp.load_weights(directory + os.sep + 'network_weights' + os.sep + network)
             self.pretrained_networks.append(temp)
             print(network + "loaded")
             del temp
 
         # Load the scalers used for normalizing the data before training
         # the NN (see train_SWOT_network()).
-        scalers = joblib.load(directory + '\\' + "scaler.save")
+        scalers = joblib.load(directory + os.sep + "scaler.save")
         self.predictors_scaler = scalers["input"]
         self.outputs_scaler = scalers["output"]
 
@@ -688,18 +688,18 @@ class NNetwork:
         if not os.path.exists(directory):
             os.mkdir(directory)
 
-        if not os.path.exists(directory + '\\' + 'network_weights'):
-            os.mkdir(directory + '\\' + 'network_weights')
+        if not os.path.exists(directory + os.sep + 'network_weights'):
+            os.mkdir(directory + os.sep + 'network_weights')
 
         model_json = self.model.to_json()
-        with open(directory + '\\' + "architecture.json", 'w') as json_file:
+        with open(directory + os.sep + "architecture.json", 'w') as json_file:
             json_file.write(model_json)
 
         json_file.close()
 
         for i in range(0, 100):
             self.train_network()
-            self.model.save_weights(directory + "\\network_weights" + "\\network" + str(i) + ".h5")
+            self.model.save_weights(directory + os.sep + "network_weights" + os.sep + "network" + str(i) + ".h5")
             print('Training network #' + str(i))
 
         self.avg_mse = np.median(np.array(self.total_mse))
@@ -709,7 +709,7 @@ class NNetwork:
 
         scaler_filename = "scaler.save"
         scalers = {"input": self.predictors_scaler, "output": self.outputs_scaler}
-        joblib.dump(scalers, directory + '\\' + scaler_filename)
+        joblib.dump(scalers, directory + os.sep + scaler_filename)
         print("Model Saved!")
 
     def set_inputs_for_table(self, wt, c):
