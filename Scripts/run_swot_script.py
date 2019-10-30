@@ -9,7 +9,10 @@ pretrained_network_dir = sys.argv[2]
 results_file = sys.argv[3]
 report_file = sys.argv[4]
 
-file = pd.read_excel(input_file)
+# Uncomment for Excel processing
+# file = pd.read_excel(input_file)
+
+file = pd.read_csv(input_file)
 
 # Support from 3 different input templates se1_frc, ts_frc, and ts frc1
 if 'se1_frc' in file.columns:
