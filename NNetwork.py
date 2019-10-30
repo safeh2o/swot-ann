@@ -26,7 +26,7 @@ class NNetwork:
         self.model = None
         self.pretrained_networks = []
 
-        self.software_version = "1.0"
+        self.software_version = "1.1"
         self.input_filename = None
         self.today = str(datetime.date.today())
 
@@ -621,7 +621,7 @@ class NNetwork:
 
         fig.suptitle('Total samples: '+ str(len(frc)))  # +
         #             "\n" + "SWOT version: " + self.software_version +
-        #             "\n" + "Input Filename: " + self.input_filename +
+        #             "\n" + "Input Filename: " + os.path.basename(self.input_filename) +
         #             "\n" + "Generated on: " + self.today)
 
 
@@ -719,7 +719,7 @@ class NNetwork:
         for i in range(len(frc)):
             watt.append(wt)
             cond.append(c)
-        temp = {"se1_frc": frc, "se1_wattemp": watt, "se1_cond": cond}
+        temp = {"ts_frc": frc, "ts_wattemp": watt, "ts_cond": cond}
         self.predictors = pd.DataFrame(temp)
 
     def generate_html_report(self, filename):
@@ -732,13 +732,11 @@ class NNetwork:
 
         doc, tag, text, line = Doc().ttl()
         with tag('h1', klass='title'):
-            text('SWOT report')
-        with tag('p', klass='summary'):
-            text('This is a summary of the SWOT run you requested')
+            text('SWOT ARTIFICIAL NEURAL NETWORK REPORT')
         with tag('p', klass='swot_version'):
-            text('SWOT Version: ' + self.software_version)
+            text('SWOT ANN Code Version: ' + self.software_version)
         with tag('p', klass='input_filename'):
-            text('Input File Specified: ' + self.input_filename)
+            text('Input File Name: ' + os.path.basename(self.input_filename))
         with tag('p', klass='date'):
             text('Date Generated: ' + self.today)
         with tag('p'):
