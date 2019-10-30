@@ -621,7 +621,7 @@ class NNetwork:
 
         fig.suptitle('Total samples: '+ str(len(frc)))  # +
         #             "\n" + "SWOT version: " + self.software_version +
-        #             "\n" + "Input Filename: " + self.input_filename +
+        #             "\n" + "Input Filename: " + os.path.basename(self.input_filename) +
         #             "\n" + "Generated on: " + self.today)
 
 
@@ -736,7 +736,7 @@ class NNetwork:
         with tag('p', klass='swot_version'):
             text('SWOT ANN Code Version: ' + self.software_version)
         with tag('p', klass='input_filename'):
-            text('Input File Name: ' + self.input_filename)
+            text('Input File Name: ' + os.path.basename(self.input_filename))
         with tag('p', klass='date'):
             text('Date Generated: ' + self.today)
         with tag('p'):
