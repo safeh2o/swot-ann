@@ -214,6 +214,8 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
+        self.file.dropna(subset='ts_datetime', how='all', inplace=True)
+        self.file.dropna(subset='hh_datetime', how='all', inplace=True)
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
 
@@ -760,7 +762,7 @@ class NNetwork:
         table_df['Input FRC (mg/L)'] = self.results[FRC_IN]
         table_df['Water Temperature (oC)'] = self.results[WATTEMP]
         table_df['Water Conductivity (10^-6 S/cm)'] = self.results[COND]
-        table_df['Median Predicted FRC level at Se4 (mg/L)'] = self.results['median']
+        table_df['Median Predicted FRC level at Household (mg/L)'] = self.results['median']
         table_df['Probability of predicted FRC level to be less than 0.20 mg/L'] = self.results['probability<=0.20']
         table_df['Probability of predicted FRC level to be less than 0.25 mg/L'] = self.results['probability<=0.25']
         table_df['Probability of predicted FRC level to be less than 0.30 mg/L'] = self.results['probability<=0.30']
