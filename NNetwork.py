@@ -6,6 +6,7 @@ import base64
 import io
 from yattag import Doc
 import datetime
+from datetime import timedelta
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ class NNetwork:
         self.software_version = "1.1"
         self.input_filename = None
         self.today = str(datetime.date.today())
+        self.avg_time_elapsed = timedelta(seconds=0)
 
         self.predictors_scaler = MinMaxScaler()
         self.outputs_scaler = MinMaxScaler()
@@ -214,10 +216,30 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
-        self.file.dropna(subset='ts_datetime', how='all', inplace=True)
-        self.file.dropna(subset='hh_datetime', how='all', inplace=True)
+        self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
+        self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
+
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
+
+        start_date = self.file["ts_datetime"]
+        end_date = self.file["hh_datetime"]
+
+        durations = []
+        for i in range(len(start_date)):
+            temp_sta = start_date[i][:16]
+            temp_end = end_date[i][:16]
+            start = datetime.datetime.strptime(temp_sta, "%Y-%m-%dT%H:%M")
+            end = datetime.datetime.strptime(temp_end, "%Y-%m-%dT%H:%M")
+            durations.append(end - start)
+
+        sumdeltas = timedelta(seconds=0)
+        i = 1
+        while i < len(durations):
+            sumdeltas += abs(durations[i] - durations[i - 1])
+            i = i + 1
+
+        self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
 
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
         all_dates = []
@@ -294,8 +316,29 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
+        self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
+        self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
+
+        start_date = self.file["ts_datetime"]
+        end_date = self.file["hh_datetime"]
+
+        durations = []
+        for i in range(len(start_date)):
+            temp_sta = start_date[i][:16]
+            temp_end = end_date[i][:16]
+            start = datetime.datetime.strptime(temp_sta, "%Y-%m-%dT%H:%M")
+            end = datetime.datetime.strptime(temp_end, "%Y-%m-%dT%H:%M")
+            durations.append(end - start)
+
+        sumdeltas = timedelta(seconds=0)
+        i = 1
+        while i < len(durations):
+            sumdeltas += abs(durations[i] - durations[i - 1])
+            i = i + 1
+
+        self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
 
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
         all_dates = []
@@ -326,6 +369,7 @@ class NNetwork:
         # From these rows get the temperatures and avg them
 
         # self.file.dropna(subset=[WATTEMP], how='all', inplace=True)
+
         self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.predictors = self.file.loc[:, [FRC_IN, WATTEMP, COND]]
         self.datainputs = self.predictors
@@ -741,6 +785,9 @@ class NNetwork:
             text('Input File Name: ' + os.path.basename(self.input_filename))
         with tag('p', klass='date'):
             text('Date Generated: ' + self.today)
+        with tag('p', klass="time_difference"):
+            text("Average time between tapstand and household: " + str(self.avg_time_elapsed.seconds // 3600) + " hours and " +
+              str((self.avg_time_elapsed.seconds // 60) % 60) + " minutes")
         with tag('p'):
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
