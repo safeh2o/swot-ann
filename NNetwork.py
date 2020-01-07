@@ -711,7 +711,7 @@ class NNetwork:
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
         ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (uS/cm)', 'Median: ' + str(median) + ' (uS/cm)'))
 
-        fig.savefig(os.path.splitext(filename)[0]+'.svg', format='svg', dpi=2400)
+        fig.savefig(os.path.splitext(filename)[0]+'.jpg', format='jpg')
         # plt.show()
 
         myStringIOBytes = io.BytesIO()
@@ -791,7 +791,7 @@ class NNetwork:
         with tag('p'):
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
-            doc.stag('img', src='data:image/png;base64, ' + input_plot_b64_graph)
+            doc.stag('img', src="cid:" + os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
         doc.asis(html_table)
 
         file = open(filename, 'w+')
