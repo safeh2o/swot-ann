@@ -612,13 +612,13 @@ class NNetwork:
         ax = fig.add_subplot(222)
         img = ax.scatter(frc, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('FRC at tapstand (mg/L)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (uS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(223)
         img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (uS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(224)
@@ -646,7 +646,7 @@ class NNetwork:
         my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_jpgData
 
-    def generate_input_info_plots(self):
+    def generate_input_info_plots(self, filename):
         """Generates histograms of the inputs to the ANN
 
         Plots one histogram for each input field on the neural network
@@ -693,25 +693,25 @@ class NNetwork:
 
         ax = fig.add_subplot(223)
         ax.hist(cond, bins=20, edgecolor='black', linewidth=0.1)
-        ax.set_xlabel('Water Conductivity (μS/cm)')
+        ax.set_xlabel('Water Conductivity (uS/cm)')
         ax.set_ylabel('# of instances')
         mean = round(np.mean(cond), 2)
         median = np.median(cond)
         mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
-        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
+        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' (uS/cm)', 'Median: ' + str(median) + ' (uS/cm)'))
 
         ax = fig.add_subplot(224)
         ax.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
-        ax.set_xlabel('Household FRC (μS/cm)')
+        ax.set_xlabel('Household FRC (uS/cm)')
         ax.set_ylabel('# of instances')
         mean = round(np.mean(frc4), 2)
         median = np.median(frc4)
         mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
-        ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
+        ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (uS/cm)', 'Median: ' + str(median) + ' (uS/cm)'))
 
-        # fig.savefig('all_Results.svg', format='svg', dpi=2400)
+        fig.savefig(os.path.splitext(filename)[0]+'.svg', format='svg', dpi=2400)
         # plt.show()
 
         myStringIOBytes = io.BytesIO()
@@ -772,7 +772,7 @@ class NNetwork:
         """Generates an html report of the SWOT results. The report
         is saved on disk under the name 'filename'."""
 
-        input_plot_b64_graph = self.generate_input_info_plots().decode('UTF-8')
+        input_plot_b64_graph = self.generate_input_info_plots(filename).decode('UTF-8')
         # scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
         html_table = self.prepare_table_for_html_report()
 
@@ -875,13 +875,13 @@ class NNetwork:
         ax = fig.add_subplot(222)
         img = ax.scatter(frc, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Initial FRC (mg/L)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (uS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(223)
         img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (uS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(224)
