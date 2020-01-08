@@ -646,7 +646,7 @@ class NNetwork:
         my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_jpgData
 
-    def generate_input_info_plots(self):
+    def generate_input_info_plots(self, filename):
         """Generates histograms of the inputs to the ANN
 
         Plots one histogram for each input field on the neural network
@@ -711,7 +711,7 @@ class NNetwork:
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
         ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
 
-        # fig.savefig('all_Results.svg', format='svg', dpi=2400)
+        fig.savefig(os.path.splitext(filename)[0]+'.jpg', format='jpg')
         # plt.show()
 
         myStringIOBytes = io.BytesIO()
@@ -772,7 +772,7 @@ class NNetwork:
         """Generates an html report of the SWOT results. The report
         is saved on disk under the name 'filename'."""
 
-        input_plot_b64_graph = self.generate_input_info_plots().decode('UTF-8')
+        self.generate_input_info_plots(filename).decode('UTF-8')
         # scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
         html_table = self.prepare_table_for_html_report()
 
@@ -791,7 +791,7 @@ class NNetwork:
         with tag('p'):
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
-            doc.stag('img', src='data:image/png;base64, ' + input_plot_b64_graph)
+            doc.stag('img', src="cid:" + os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
         doc.asis(html_table)
 
         file = open(filename, 'w+')
