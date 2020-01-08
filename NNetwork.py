@@ -772,7 +772,7 @@ class NNetwork:
         """Generates an html report of the SWOT results. The report
         is saved on disk under the name 'filename'."""
 
-        input_plot_b64_graph = self.generate_input_info_plots(filename).decode('UTF-8')
+        self.generate_input_info_plots(filename).decode('UTF-8')
         # scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
         html_table = self.prepare_table_for_html_report()
 
