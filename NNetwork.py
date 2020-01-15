@@ -350,18 +350,20 @@ class NNetwork:
         nan_rows_watt = self.file.loc[self.file[WATTEMP].isnull()]
         nan_rows_cond = self.file.loc[self.file[COND].isnull()]
 
+        temps=[]
         # For every row of the missing data find the rows on the same day
         for i in nan_rows_watt.index:
             today = self.file.loc[i, 'formatted_date']
             same_days = self.file[self.file['formatted_date'] == today]
             temps = same_days[WATTEMP].dropna().to_numpy()
         avg_daily_temp = np.mean(temps)
-
+        conds = []
         for i in nan_rows_cond.index:
             today = self.file.loc[i, 'formatted_date']
             same_days = self.file[self.file['formatted_date'] == today]
             conds = same_days[COND].dropna().to_numpy()
         avg_daily_cond = np.mean(conds)
+
 
         self.file[WATTEMP] = self.file[WATTEMP].fillna(value=avg_daily_temp)
         self.file[COND] = self.file[COND].fillna(value=avg_daily_cond)
