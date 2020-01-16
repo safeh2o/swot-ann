@@ -335,7 +335,7 @@ class NNetwork:
         sumdeltas = timedelta(seconds=0)
         i = 1
         while i < len(durations):
-            sumdeltas += abs(durations[i] - durations[i - 1])
+            sumdeltas += abs(durations[i])
             i = i + 1
 
         self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
