@@ -337,7 +337,7 @@ class NNetwork:
         while i < len(durations):
             sumdeltas += abs(durations[i])
             i = i + 1
-
+        print(len(durations)-1)
         self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
 
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
@@ -534,10 +534,10 @@ class NNetwork:
         plt.show()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format='jpg')
+        plt.savefig(myStringIOBytes, format='png')
         myStringIOBytes.seek(0)
-        my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
-        return my_base_64_jpgData
+        my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
+        return my_base_64_pngData
 
     def generate_2d_scatterplot(self):
         """Generate a 2d scatterplot of the predictions
@@ -643,10 +643,10 @@ class NNetwork:
         plt.show()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format='jpg')
+        plt.savefig(myStringIOBytes, format='png')
         myStringIOBytes.seek(0)
-        my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
-        return my_base_64_jpgData
+        my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
+        return my_base_64_pngData
 
     def generate_input_info_plots(self, filename):
         """Generates histograms of the inputs to the ANN
@@ -667,7 +667,7 @@ class NNetwork:
 
         fig = plt.figure(figsize=(19.2, 10.8), dpi=100)
 
-        fig.suptitle('Total samples: '+ str(len(frc)))  # +
+        #fig.suptitle('Total samples: '+ str(len(frc)))  # +
         #             "\n" + "SWOT version: " + self.software_version +
         #             "\n" + "Input Filename: " + os.path.basename(self.input_filename) +
         #             "\n" + "Generated on: " + self.today)
@@ -713,14 +713,14 @@ class NNetwork:
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
         ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
 
-        fig.savefig(os.path.splitext(filename)[0]+'.jpg', format='jpg')
+        fig.savefig(os.path.splitext(filename)[0]+'.png', format='png')
         # plt.show()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format='jpg')
+        plt.savefig(myStringIOBytes, format='png')
         myStringIOBytes.seek(0)
-        my_base_64_jpgData = base64.b64encode(myStringIOBytes.read())
-        return my_base_64_jpgData
+        my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
+        return my_base_64_pngData
 
     def train_SWOT_network(self, directory='untitled_network'):
         """Train the set of 100 neural networks on SWOT data
@@ -774,6 +774,9 @@ class NNetwork:
         """Generates an html report of the SWOT results. The report
         is saved on disk under the name 'filename'."""
 
+        df = self.datainputs
+        frc = df[FRC_IN]
+
         self.generate_input_info_plots(filename).decode('UTF-8')
         # scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
         html_table = self.prepare_table_for_html_report()
@@ -791,9 +794,11 @@ class NNetwork:
             text("Average time between tapstand and household: " + str(self.avg_time_elapsed.seconds // 3600) + " hours and " +
               str((self.avg_time_elapsed.seconds // 60) % 60) + " minutes")
         with tag('p'):
+            text('Total Samples: ' + str(len(frc)))
+        with tag('p'):
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
-            doc.stag('img', src="cid:" + os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
+            doc.stag('img', src= os.path.basename(os.path.splitext(filename)[0]+'.png')) #src="cid:" +os.path.basename(os.path.splitext(filename)[0]+'.png'
         doc.asis(html_table)
 
         file = open(filename, 'w+')
