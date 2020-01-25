@@ -799,8 +799,9 @@ class NNetwork:
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
             doc.stag('img', src='cid:' +os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
-        with tag('div', id='inputs_graphs2'):
-            doc.tag('object', data=os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
+            #doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.jpg') + '" type="image/jpeg"></object>')
+
+        doc.asis('<object data="'+os.path.basename(os.path.splitext(filename)[0]+'.jpg') + '" type="image/jpeg"></object>')
 
         doc.asis(html_table)
 
