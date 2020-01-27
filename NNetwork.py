@@ -163,8 +163,8 @@ class NNetwork:
         rsquared_train = r2_score(x_tr, y_tr)
         rsquared_test = r2_score(x_ts, y_ts)
 
-        self.total_mse.append(self.history.history['mean_squared_error'][self.epochs-1])
-        self.total_mse_val.append(self.history.history['val_mean_squared_error'][self.epochs-1])
+        self.total_mse.append(self.history.history['mse'][self.epochs-1])
+        self.total_mse_val.append(self.history.history['val_mse'][self.epochs-1])
         self.total_rsquared.append(rsquared_train)
         self.total_rsquared_val.append(rsquared_test)
 
@@ -218,6 +218,7 @@ class NNetwork:
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
         self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
         self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
+        self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
 
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
@@ -318,6 +319,7 @@ class NNetwork:
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
         self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
         self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
+        self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
 
