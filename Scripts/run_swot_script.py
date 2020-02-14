@@ -2,10 +2,11 @@ import sys
 from NNetwork import NNetwork
 import pandas as pd
 import numpy as np
+import datetime
 
 SWOT_net = NNetwork()
 input_file = sys.argv[1]
-pretrained_network_dir = sys.argv[2]
+directory = "dighr\\swot-python-analysis\\ModelRetraining\\"+now.strftime("%m%d%Y_%H%M%S")+"_"+input_file 
 results_file = sys.argv[3]
 report_file = sys.argv[4]
 
@@ -36,8 +37,9 @@ med_temp = np.median(file[WATTEMP].dropna().to_numpy())
 med_cond = np.median(file[COND].dropna().to_numpy())
 
 SWOT_net.import_data_from_csv(input_file)
+SWOT_net.train_SWOT_network(directory)
 SWOT_net.set_inputs_for_table(med_temp ,med_cond)
-SWOT_net.import_pretrained_model(pretrained_network_dir)
+SWOT_net.import_pretrained_model(directory)
 SWOT_net.predict()
 SWOT_net.display_results()
 SWOT_net.export_results_to_csv(results_file)
