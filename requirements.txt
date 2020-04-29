@@ -6,3 +6,4 @@ pandas>=0.25.1
 sklearn
 xlrd>=1.2.0
 yattag>=1.12.2
+pillow>=7.1.2
