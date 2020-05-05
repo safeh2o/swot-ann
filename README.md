@@ -9,12 +9,6 @@ on user inputs.
 #### Version History
 v1.1 - Initial version
 
-v1.2 - Updates include:
-  1. Modifying NNetwork to accept time either as a number (as formatted in Excel) or the standard Kobo output
-  2. Modified the 'run_swot_script' to retrain on the new dataset as a temporary measure until a model retraining protocol is         established
-  3. Revised the 'train_SWOT_network(directory)' function within the NNetwork code to randomize the initial weights and biases before training each of the networks. 
-  4. Revised the network training to use an early stopping criterion instead of a fixed number of epochs for training
-
 #### Training Workflow
 
 To train the swot network, instantiate a `NNetwork` object and call the 
