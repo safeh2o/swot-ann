@@ -7,7 +7,12 @@ and interact with it for training on a given data-set and making predictions
 on user inputs.
 
 #### Version History
+
 v1.1 - Initial version
+v1.2 - Updates include:
+  1. Modifying NNetwork to accept time either as a number (as formatted in Excel) or the standard Kobo output
+  2. Modified the 'run_swot_script' to retrain on the new dataset as a temporary measure until a model retraining protocol is established
+
 
 #### Training Workflow
 
