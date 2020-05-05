@@ -6,6 +6,9 @@ NNetwork. This class has all the necessary methods to create a neural network
 and interact with it for training on a given data-set and making predictions 
 on user inputs.
 
+#### Version History
+v1.1 - Initial version
+
 #### Training Workflow
 
 To train the swot network, instantiate a `NNetwork` object and call the 
@@ -55,13 +58,13 @@ i.e. `python run_swot_script SWOTAllData.csv untitled_network results.csv`
 #### Libraries
 
 Install the following libraries for the Network to work:
-1. keras
-2. Tensorflow
-3. numpy
-4. matplotlib
-5. pandas
-6. sklearn
+1. keras - a more user-friendly library for building neural networks
+2. Tensorflow - Tensorflow is the ML library
+3. numpy - adds necessary math functions
+4. matplotlib - for figure production
+5. pandas - for data structure management
+6. sklearn - data science library, contains MinMaxScaler for scaling inputs and outputs, as well as several built in performance metrics
 7. Pillow
-8. xlrd
-9. Yattag
+8. xlrd - for reading excel libraries
+9. Yattag - for HTML reporting
 
