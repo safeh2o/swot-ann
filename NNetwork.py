@@ -335,12 +335,19 @@ class NNetwork:
         end_date = self.file["hh_datetime"]
 
         durations = []
-        for i in range(len(start_date)):
-            temp_sta = start_date[i][:16]
-            temp_end = end_date[i][:16]
-            start = datetime.datetime.strptime(temp_sta, "%Y-%m-%dT%H:%M")
-            end = datetime.datetime.strptime(temp_end, "%Y-%m-%dT%H:%M")
-            durations.append(end - start)
+        if start_date.dtype == 'float64':  # Excel type
+            for i in range(len(start_date)):
+                start = xlrd.xldate.xldate_as_datetime(start_date[i], datemode=0)
+                end = xlrd.xldate.xldate_as_datetime(end_date[i], datemode=0)
+                durations.append(end - start)
+
+        else:  # kobo type
+            for i in range(len(start_date)):
+                temp_sta = start_date[i][:16]
+                temp_end = end_date[i][:16]
+                start = datetime.datetime.strptime(temp_sta, "%Y-%m-%dT%H:%M")
+                end = datetime.datetime.strptime(temp_end, "%Y-%m-%dT%H:%M")
+                durations.append(end - start)
 
         sumdeltas = timedelta(seconds=0)
         i = 1
