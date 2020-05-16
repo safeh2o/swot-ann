@@ -735,8 +735,27 @@ class NNetwork:
 
         # create figure for initial and household FRC separately in a single image
         figFRC = plt.figure(figsize=(19.2, 5.4), dpi=100)
-        figFRC.add_subplot(axInitialFRC)
-        figFRC.add_subplot(axHouseholdFRC)
+        
+        axInitialFRC = figFRC.add_subplot(221)
+        axInitialFRC.hist(frc, bins=20, edgecolor='black', linewidth=0.1)
+        axInitialFRC.set_xlabel('Initial FRC (mg/L)')
+        axInitialFRC.set_ylabel('# of instances')
+        mean = round(np.mean(frc), 2)
+        median = np.median(frc)
+        mean_line = axInitialFRC.axvline(mean, color='r', linestyle='dashed', linewidth=2)
+        median_line = axInitialFRC.axvline(median, color='y', linestyle='dashed', linewidth=2)
+        axInitialFRC.legend((mean_line, median_line),('Mean: ' + str(mean) + ' mg/L', 'Median: ' + str(median) + ' mg/L'))
+
+        axHouseholdFRC = figFRC.add_subplot(224)
+        axHouseholdFRC.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
+        axHouseholdFRC.set_xlabel('Household FRC (μS/cm)')
+        axHouseholdFRC.set_ylabel('# of instances')
+        mean = round(np.mean(frc4), 2)
+        median = np.median(frc4)
+        mean_line = axHouseholdFRC.axvline(mean, color='r', linestyle='dashed', linewidth=2)
+        median_line = axHouseholdFRC.axvline(median, color='y', linestyle='dashed', linewidth=2)
+        axHouseholdFRC.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
+
         figFRC.savefig(os.path.splitext(filename)[0]+'-frc.jpg', format='jpg')
 
         myStringIOBytes = io.BytesIO()
