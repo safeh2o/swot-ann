@@ -1,7 +1,7 @@
-[![Build Status](https://dev.azure.com/moselhy/Moes%20Sandbox/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/moselhy/Moes%20Sandbox/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/moselhy/Moes%20Sandbox/_apis/build/status/dighr.swot-python-analysis?branchName=devops)](https://dev.azure.com/moselhy/Moes%20Sandbox/_build/latest?definitionId=1&branchName=devops)
 
-# swot-webapp
-Repo for the Safe Water Optimization Tool Web Application 
+# swot-python-analysis
+Repo for the Safe Water Optimization Tool ANN Model
 
 The implementation of the network is encapsulated in a single class called
 NNetwork. This class has all the necessary methods to create a neural network
