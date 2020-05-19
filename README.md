@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/moselhy/MohamedMoselhy/_apis/build/status/dighr.swot-python-analysis?branchName=devops)](https://dev.azure.com/moselhy/MohamedMoselhy/_build/latest?definitionId=1&branchName=devops)
+
 # swot-webapp
 Repo for the Safe Water Optimization Tool Web Application 
 
