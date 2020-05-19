@@ -1,0 +1,9 @@
+keras>=2.3.0
+tensorflow>=2.0.0a0
+numpy>=1.17.2
+matplotlib>=3.1.1
+pandas>=0.25.1
+sklearn
+xlrd>=1.2.0
+yattag>=1.12.2
+pillow>=7.1.2
