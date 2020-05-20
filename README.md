@@ -9,9 +9,15 @@ on user inputs.
 #### Version History
 
 v1.1 - Initial version
-v1.2 - Updates include:
+
+v1.2 (May 06, 2020) - Updates include:
   1. Modifying NNetwork to accept time either as a number (as formatted in Excel) or the standard Kobo output
   2. Modified the 'run_swot_script' to retrain on the new dataset as a temporary measure until a model retraining protocol is established
+  
+v1.3 (May 20, 2020) - Updates include:
+  1. Modified the data division to split dataset used for training the model into training, validation, and testing (previous versions only split into training and validation). Training results graphs have been updated to reflect this split.
+  2. Changed from using a fixed number of epochs for training to using an early stopping procedure based on validation MSE with a patience of 10 epochs. To ensure this works, training results are no longer saved to the self.history and instead the history is reset for each model in the ensemble.
+  3. Forcing the model to randomize the weights and biases of each ANN in the ensemble to properly represent a multi-start ensemble.
 
 
 #### Training Workflow
