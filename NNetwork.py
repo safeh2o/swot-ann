@@ -7,6 +7,7 @@ import io
 from yattag import Doc
 import datetime
 from datetime import timedelta
+import xlrd
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ import matplotlib as mpl
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_squared_error
 from pandas import ExcelWriter
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -27,146 +29,43 @@ class NNetwork:
         self.model = None
         self.pretrained_networks = []
 
-        self.software_version = "1.1"
+        self.software_version = "1.3"
         self.input_filename = None
         self.today = str(datetime.date.today())
         self.avg_time_elapsed = timedelta(seconds=0)
 
-        self.predictors_scaler = MinMaxScaler()
-        self.outputs_scaler = MinMaxScaler()
+        self.predictors_scaler = MinMaxScaler(feature_range=(-1, 1))
+        self.targets_scaler = MinMaxScaler(feature_range=(-1, 1))
 
         self.history = None
         self.file = None
 
         self.layer1_neurons = 5
-        self.epochs = 30
+        self.epochs =1000
 
         self.predictors = None
 
-        self.predictors_train = None
-        self.predictors_test = None
-        self.predictors_train_normalized = None
-        self.predictors_test_normalized = None
-        self.outputs_test_normalized = None
-
-        self.outputs = None
-        self.predictions = pd.DataFrame()
-        self.results = pd.DataFrame()
+        self.targets = None
+        self.predictions = None
+        self.results = None
 
         self.total_mse = []
         self.total_rsquared = []
         self.total_mse_val = []
         self.total_rsquared_val = []
 
-        self.avg_mse = 0
-        self.avg_rsq = 0
+        self.avg_mse_train = 0
+        self.avg_rsq_train = 0
         self.avg_mse_val = 0
         self.avg_rsq_val = 0
+        self.avg_mse_test = 0
+        self.avg_rsq_test = 0
 
-        self.outputs_train = None
-        self.outputs_test = None
-        self.outputs_train_normalized = None
-
+        self.optimizer = keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999)
         self.model = keras.models.Sequential()
         self.model.add(keras.layers.Dense(self.layer1_neurons, input_dim=3, activation="tanh"))
-        self.model.add(keras.layers.Dense(1))
-
-        self.optimizer = keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None,
-                                                schedule_decay=0.004)
-        self.model.compile(loss='mse', optimizer="adam", metrics=['mse'])
-
-    def import_pretrained_model(self, directory):
-        """Loads a pretrained SWOT neural Network.
-
-        Loads a neural network that has previously been trained and saved by
-        the SWOT NN. The saved networks are stored as directories.
-
-        Args:
-            directory: The name of the directory where the pretrained network exists.
-                The directory name can be specified as a relative or an absolute path.
-        """
-
-        # Look in the pretrained-net directory for the JSON file that contains
-        # the NN architecture and load it.
-        json_architecture = open(directory + os.sep + 'architecture.json', 'r')
-        network_architecture = json_architecture.read()
-        json_architecture.close()
-
-        # Load all the pretrained networks and store them in an array
-        # called self.pretrained_networks (see __init__).
-        pretrained_networks = os.listdir(directory + os.sep + "network_weights")
-        for network in pretrained_networks:
-            temp = keras.models.model_from_json(network_architecture)
-            temp.load_weights(directory + os.sep + 'network_weights' + os.sep + network)
-            self.pretrained_networks.append(temp)
-            print(network + "loaded")
-            del temp
-
-        # Load the scalers used for normalizing the data before training
-        # the NN (see train_SWOT_network()).
-        scalers = joblib.load(directory + os.sep + "scaler.save")
-        self.predictors_scaler = scalers["input"]
-        self.outputs_scaler = scalers["output"]
-
-    def train_network(self):
-        """
-        Trains a single Neural Network on imported data.
-
-        This method trains Neural Network on data that have previously been imported
-        to the network using the import_data_from_csv() or import_data_from_excel() methods.
-        The network used is a Multilayer Perceptron (MLP). Input and Output data are
-        normalized using MinMax Normalization.
-
-        The input dataset is split in training and validation datasets, where 80% of the inputs
-        are the training dataset and 20% is the validation dataset.
-
-        The training history is stored in a variable called self.history (see keras documentation:
-        keras.model.history object)
-
-        Performance metrics are calculated and stored for evaluating the network performance.
-        """
-
-        # Set the scalers for the inputs and outputs.
-        # Different normalizers is used for the input and the output data.
-        self.predictors_scaler = self.predictors_scaler.fit(self.predictors)
-        self.outputs_scaler = self.outputs_scaler.fit(self.outputs)
-
-        # Split the input dataset to training and validation datasets
-        self.predictors_train, self.predictors_test, self.outputs_train, self.outputs_test =\
-            train_test_split(self.predictors, self.outputs, test_size=0.2, shuffle=True)
-
-        # Normalize all the datasets
-        self.predictors_train_normalized = self.predictors_scaler.transform(self.predictors_train)
-        self.predictors_test_normalized = self.predictors_scaler.transform(self.predictors_test)
-        self.outputs_train_normalized = self.outputs_scaler.transform(self.outputs_train)
-        self.outputs_test_normalized = self.outputs_scaler.transform(self.outputs_test)
-
-        # Train the neural network
-        self.history = self.model.fit(self.predictors_train_normalized,
-                                      self.outputs_train_normalized, epochs=self.epochs,
-                                      validation_data=(self.predictors_test_normalized, self.outputs_test_normalized),
-                                      verbose=0)
-
-        # Make predictions to evaluate the model
-        y_train_norm = self.model.predict(self.predictors_train_normalized)
-        y_train = self.outputs_scaler.inverse_transform(y_train_norm)
-        y_test_norm = self.model.predict(self.predictors_test_normalized)
-        y_test = self.outputs_scaler.inverse_transform(y_test_norm)
-
-        # Calculate and store MSE and R^2 metrics for both
-        # training and validation datasets
-        x_tr = np.squeeze(np.asarray(self.outputs_train))
-        y_tr = np.squeeze(np.asarray(y_train))
-        x_ts = np.squeeze(np.asarray(self.outputs_test))
-        y_ts = np.squeeze(np.asarray(y_test))
-
-        rsquared_train = r2_score(x_tr, y_tr)
-        rsquared_test = r2_score(x_ts, y_ts)
-
-        self.total_mse.append(self.history.history['mse'][self.epochs-1])
-        self.total_mse_val.append(self.history.history['val_mse'][self.epochs-1])
-        self.total_rsquared.append(rsquared_train)
-        self.total_rsquared_val.append(rsquared_test)
+        self.model.add(keras.layers.Dense(1, activation="linear"))
+        self.model.compile(loss='mse', optimizer=self.optimizer, metrics=['mse'])
 
     def import_data_from_excel(self, filename, sheet=0):
         """
@@ -216,6 +115,7 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
+        self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
         self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
@@ -227,7 +127,6 @@ class NNetwork:
         end_date = self.file["hh_datetime"]
 
         durations = []
-
         if start_date.dtype == 'float64':  # Excel type
             for i in range(len(start_date)):
                 start = xlrd.xldate.xldate_as_datetime(start_date[i], datemode=0)
@@ -253,7 +152,7 @@ class NNetwork:
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
         all_dates = []
         for row in self.file.index:
-            all_dates.append(str(self.file.loc[row,'ts_datetime'])[0:10])
+            all_dates.append(str(self.file.loc[row, 'ts_datetime'])[0:10])
         self.file['formatted_date'] = all_dates
 
         # Locate the rows of the missing data
@@ -282,7 +181,7 @@ class NNetwork:
         self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.predictors = self.file.loc[:, [FRC_IN, WATTEMP, COND]]
         self.datainputs = self.predictors
-        self.outputs = self.file.loc[:, FRC_OUT].values.reshape(-1, 1)
+        self.targets = self.file.loc[:, FRC_OUT].values.reshape(-1, 1)
 
         self.input_filename = filename
 
@@ -325,6 +224,7 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
+        self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
         self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
@@ -350,11 +250,10 @@ class NNetwork:
                 durations.append(end - start)
 
         sumdeltas = timedelta(seconds=0)
-        i = 1
-        while i < len(durations):
+
+        for i in range (0,len(durations)):
             sumdeltas += abs(durations[i])
-            i = i + 1
-        print(len(durations)-1)
+
         self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
 
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
@@ -367,7 +266,7 @@ class NNetwork:
         nan_rows_watt = self.file.loc[self.file[WATTEMP].isnull()]
         nan_rows_cond = self.file.loc[self.file[COND].isnull()]
 
-        temps=[]
+        temps = []
         # For every row of the missing data find the rows on the same day
         for i in nan_rows_watt.index:
             today = self.file.loc[i, 'formatted_date']
@@ -381,7 +280,6 @@ class NNetwork:
             conds = same_days[COND].dropna().to_numpy()
         avg_daily_cond = np.mean(conds)
 
-
         self.file[WATTEMP] = self.file[WATTEMP].fillna(value=avg_daily_temp)
         self.file[COND] = self.file[COND].fillna(value=avg_daily_cond)
 
@@ -389,12 +287,145 @@ class NNetwork:
 
         # self.file.dropna(subset=[WATTEMP], how='all', inplace=True)
 
-        self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.predictors = self.file.loc[:, [FRC_IN, WATTEMP, COND]]
         self.datainputs = self.predictors
-        self.outputs = self.file.loc[:, FRC_OUT].values.reshape(-1, 1)
+        self.targets = self.file.loc[:, FRC_OUT].values.reshape(-1, 1)
 
         self.input_filename = filename
+    def train_SWOT_network(self, directory):
+        """Train the set of 100 neural networks on SWOT data
+
+        Trains an ensemble of 100 neural networks on se1_frc, water temperature,
+        water conductivity."""
+
+        self.predictors_scaler = self.predictors_scaler.fit(self.predictors)
+        self.targets_scaler = self.targets_scaler.fit(self.targets)
+
+        self.total_mse_train = []
+        self.total_rsquared_train = []
+        self.total_mse_val = []
+        self.total_rsquared_val = []
+        self.total_mse_test = []
+        self.total_rsquared_test = []
+
+        x=self.predictors
+        t=self.targets
+
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
+        if not os.path.exists(directory + os.sep + 'network_weights'):
+            os.mkdir(directory + os.sep + 'network_weights')
+
+        model_json = self.model.to_json()
+        with open(directory + os.sep + "architecture.json", 'w') as json_file:
+            json_file.write(model_json)
+
+        json_file.close()
+
+        for i in range(0, 100):
+            print('Training Network ' + str(i))
+            self.train_network(x, t)
+            self.model.save_weights(directory + os.sep + "network_weights" + os.sep + "network" + str(i) + ".h5")
+
+        self.avg_mse_train = np.median(np.array(self.total_mse_train))
+        self.avg_rsq_train = np.median(np.array(self.total_rsquared_train))
+        self.avg_mse_val = np.median(np.array(self.total_mse_val))
+        self.avg_rsq_val = np.median(np.array(self.total_rsquared_val))
+        self.avg_mse_test = np.median(np.array(self.total_mse_test))
+        self.avg_rsq_test = np.median(np.array(self.total_rsquared_test))
+
+        scaler_filename = "scaler.save"
+        scalers = {"input": self.predictors_scaler, "output": self.targets_scaler}
+        joblib.dump(scalers, directory + os.sep + scaler_filename)
+        print("Model Saved!")
+
+    def train_network(self, x, t):
+        """
+        Trains a single Neural Network on imported data.
+
+        This method trains Neural Network on data that have previously been imported
+        to the network using the import_data_from_csv() or import_data_from_excel() methods.
+        The network used is a Multilayer Perceptron (MLP). Input and Output data are
+        normalized using MinMax Normalization.
+
+        The input dataset is split in training and validation datasets, where 80% of the inputs
+        are the training dataset and 20% is the validation dataset.
+
+        The training history is stored in a variable called self.history (see keras documentation:
+        keras.model.history object)
+
+        Performance metrics are calculated and stored for evaluating the network performance.
+        """
+        early_stopping_monitor=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10,
+                                      restore_best_weights=True)
+
+        x_norm=self.predictors_scaler.transform(x)
+        t_norm=self.targets_scaler.transform(t)
+
+        x_norm_train, xx, t_norm_train, tt = train_test_split(x_norm, t_norm, test_size=0.5, shuffle=True)
+        x_norm_val, x_norm_test, t_norm_val, t_norm_test, = train_test_split(xx, tt, test_size=0.5, shuffle=True)
+        new_weights = [np.random.uniform(-0.05, 0.05, w.shape) for w in self.model.get_weights()]
+        self.model.set_weights(new_weights)
+        self.model.fit(x_norm_train, t_norm_train, epochs=1000, validation_data=(x_norm_val, t_norm_val),
+                  callbacks=[early_stopping_monitor], verbose=0)
+
+        # Get real data for training
+        y_norm_train = self.model.predict(x_norm_train)
+
+        # Get real data for validation
+        y_norm_val = self.model.predict(x_norm_val)
+
+        y_norm_test = self.model.predict(x_norm_test)
+
+        rsquared_train = r2_score(self.targets_scaler.inverse_transform(t_norm_train), self.targets_scaler.inverse_transform(y_norm_train))
+        rsquared_val=r2_score(self.targets_scaler.inverse_transform(t_norm_val), self.targets_scaler.inverse_transform(y_norm_val))
+        rsquared_test = r2_score(self.targets_scaler.inverse_transform(t_norm_test), self.targets_scaler.inverse_transform(y_norm_test))
+
+        mse_train = mean_squared_error(self.targets_scaler.inverse_transform(t_norm_train), self.targets_scaler.inverse_transform(y_norm_train))
+        mse_val = mean_squared_error(self.targets_scaler.inverse_transform(t_norm_val), self.targets_scaler.inverse_transform(y_norm_val))
+        mse_test = mean_squared_error(self.targets_scaler.inverse_transform(t_norm_test), self.targets_scaler.inverse_transform(y_norm_test))
+
+        self.total_mse_train.append(mse_train)
+        self.total_mse_val.append(mse_val)
+        self.total_mse_test.append(mse_test)
+        self.total_rsquared_train.append(rsquared_train)
+        self.total_rsquared_val.append(rsquared_val)
+        self.total_rsquared_test.append(rsquared_test)
+
+
+    def import_pretrained_model(self, directory):
+        """Loads a pretrained SWOT neural Network.
+
+        Loads a neural network that has previously been trained and saved by
+        the SWOT NN. The saved networks are stored as directories.
+
+        Args:
+            directory: The name of the directory where the pretrained network exists.
+                The directory name can be specified as a relative or an absolute path.
+        """
+
+        # Look in the pretrained-net directory for the JSON file that contains
+        # the NN architecture and load it.
+        json_architecture = open(directory + os.sep + 'architecture.json', 'r')
+        network_architecture = json_architecture.read()
+        json_architecture.close()
+
+        # Load all the pretrained networks and store them in an array
+        # called self.pretrained_networks (see __init__).
+        pretrained_networks = os.listdir(directory + os.sep + "network_weights")
+        for network in pretrained_networks:
+            temp = keras.models.model_from_json(network_architecture)
+            temp.load_weights(directory + os.sep + 'network_weights' + os.sep + network)
+            self.pretrained_networks.append(temp)
+            print(network + "loaded")
+            del temp
+
+        # Load the scalers used for normalizing the data before training
+        # the NN (see train_SWOT_network()).
+        scalers = joblib.load(directory + os.sep + "scaler.save")
+        self.predictors_scaler = scalers["input"]
+        self.targets_scaler = scalers["output"]
 
     def predict(self):
         """
@@ -428,7 +459,7 @@ class NNetwork:
         for j, network in enumerate(self.pretrained_networks):
             key = "se4_frc_net-" + str(j)
             y_norm = network.predict(inputs_norm)
-            predictions = self.outputs_scaler.inverse_transform(y_norm).tolist()
+            predictions = self.targets_scaler.inverse_transform(y_norm).tolist()
             temp = sum(predictions, [])
             results.update({key: temp})
         self.results = pd.DataFrame(results)
@@ -491,14 +522,14 @@ class NNetwork:
         Returns: Base64 data stream"""
 
         '''y_train_norm = self.model.predict(self.predictors_train_normalized)
-        y_train = self.outputs_scaler.inverse_transform(y_train_norm)
+        y_train = self.targets_scaler.inverse_transform(y_train_norm)
 
         y_test_norm = self.model.predict(self.predictors_test_normalized)
-        y_test = self.outputs_scaler.inverse_transform(y_test_norm)
+        y_test = self.targets_scaler.inverse_transform(y_test_norm)
 
-        x_tr = np.squeeze(np.asarray(self.outputs_train))
+        x_tr = np.squeeze(np.asarray(self.targets_train))
         y_tr = np.squeeze(np.asarray(y_train))
-        x_ts = np.squeeze(np.asarray(self.outputs_test))
+        x_ts = np.squeeze(np.asarray(self.targets_test))
         y_ts = np.squeeze(np.asarray(y_test))
 
         Rsquared_train = r2_score(x_tr,y_tr)
@@ -513,24 +544,26 @@ class NNetwork:
         plt.legend(['train', 'validation'], loc='upper left')
 
         plt.subplot(1, 2, 2)
-        plt.plot([0, 1.5], [0, 1.5], '--', self.outputs_train, y_train, 'ro', self.outputs_test, y_test, 'bo')
+        plt.plot([0, 1.5], [0, 1.5], '--', self.targets_train, y_train, 'ro', self.targets_test, y_test, 'bo')
         plt.show()'''
 
         fig, axs = plt.subplots(1, 2, sharex=True)
 
         ax = axs[0]
-        ax.boxplot([self.total_mse, self.total_mse_val], labels=["Training", "Validation"])
+        ax.boxplot([self.total_mse_train, self.total_mse_val, self.total_mse_test], labels=["Training", "Validation", "Testing"])
         ax.set_title("Mean Squared Error")
-        tr_legend = "Training Avg MSE: {mse:.4f}".format(mse=self.avg_mse)
+        tr_legend = "Training Avg MSE: {mse:.4f}".format(mse=self.avg_mse_train)
         val_legend = "Validation Avg MSE: {mse:.4f}".format(mse=self.avg_mse_val)
-        ax.legend([tr_legend, val_legend])
+        ts_legend = "Testing Avg MSE: {mse:.4f}".format(mse=self.avg_mse_test)
+        ax.legend([tr_legend, val_legend, ts_legend])
 
         ax = axs[1]
-        ax.boxplot([self.total_rsquared, self.total_rsquared_val], labels=["Training", "Validation"])
+        ax.boxplot([self.total_rsquared_train, self.total_rsquared_val, self.total_rsquared_test], labels=["Training", "Validation","Testing"])
         ax.set_title("R^2")
-        tr_legend = "Training Avg. R^2: {rs:.3f}".format(rs=self.avg_rsq)
+        tr_legend = "Training Avg. R^2: {rs:.3f}".format(rs=self.avg_rsq_train)
         val_legend = "Validation Avg. R^2: {rs:.3f}".format(rs=self.avg_rsq_val)
-        ax.legend([tr_legend, val_legend])
+        ts_legend = "Validation Avg. R^2: {rs:.3f}".format(rs=self.avg_rsq_test)
+        ax.legend([tr_legend, val_legend, ts_legend])
 
         fig.suptitle("Performance metrics across 100 training runs on " +
                      str(self.epochs) + " epochs, with " + str(self.layer1_neurons) + " neurons on hidden layer.")
@@ -543,10 +576,7 @@ class NNetwork:
         #            dpi=100)
         # plt.close()
 
-        self.total_rsquared = []
-        self.total_rsquared_val = []
-        self.total_mse = []
-        self.total_mse_val = []
+
 
         plt.show()
 
@@ -730,7 +760,7 @@ class NNetwork:
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
         ax.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
 
-        fig.savefig(os.path.splitext(filename)[0]+'.jpg', format='jpg')
+        fig.savefig(os.path.splitext(filename)[0]+'.png', format='png')
         # plt.show()
 
         myStringIOBytes = io.BytesIO()
@@ -739,51 +769,10 @@ class NNetwork:
         my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_pngData
 
-    def train_SWOT_network(self, directory='untitled_network'):
-        """Train the set of 100 neural networks on SWOT data
-
-        Trains an ensemble of 100 neural networks on se1_frc, water temperature,
-        water conductivity."""
-
-        self.total_mse = []
-        self.total_rsquared = []
-        self.total_mse_val = []
-        self.total_rsquared_val = []
-
-        if not os.path.exists(directory):
-            os.mkdir(directory)
-
-        if not os.path.exists(directory + os.sep + 'network_weights'):
-            os.mkdir(directory + os.sep + 'network_weights')
-
-        model_json = self.model.to_json()
-        with open(directory + os.sep + "architecture.json", 'w') as json_file:
-            json_file.write(model_json)
-
-        json_file.close()
-
-        for i in range(0, 100):
-            self.train_network()
-            self.model.save_weights(directory + os.sep + "network_weights" + os.sep + "network" + str(i) + ".h5")
-            print('Training network #' + str(i))
-
-        self.avg_mse = np.median(np.array(self.total_mse))
-        self.avg_rsq = np.median(np.array(self.total_rsquared))
-        self.avg_mse_val = np.median(np.array(self.total_mse_val))
-        self.avg_rsq_val = np.median(np.array(self.total_rsquared_val))
-
-        scaler_filename = "scaler.save"
-        scalers = {"input": self.predictors_scaler, "output": self.outputs_scaler}
-        joblib.dump(scalers, directory + os.sep + scaler_filename)
-        print("Model Saved!")
-
     def set_inputs_for_table(self, wt, c):
-        frc = np.linspace(0.2, 2, 37)
-        watt = []
-        cond = []
-        for i in range(len(frc)):
-            watt.append(wt)
-            cond.append(c)
+        frc = np.arange(0.20,2.05,0.05)
+        watt = [self.median_wattemp for i in range(0,len(frc))]
+        cond = [self.median_cond for i in range(0,len(frc))]
         temp = {"ts_frc": frc, "ts_wattemp": watt, "ts_cond": cond}
         self.predictors = pd.DataFrame(temp)
 
@@ -815,10 +804,10 @@ class NNetwork:
         with tag('p'):
             text('Inputs specified:')
         with tag('div', id='inputs_graphs'):
-            doc.stag('img', src='cid:' +os.path.basename(os.path.splitext(filename)[0]+'.jpg'))
-            #doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.jpg') + '" type="image/jpeg"></object>')
+            doc.stag('img', src='cid:' +os.path.basename(os.path.splitext(filename)[0]+'.png'))
+            #doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
 
-        doc.asis('<object data="'+os.path.basename(os.path.splitext(filename)[0]+'.jpg') + '" type="image/jpeg"></object>')
+        doc.asis('<object data="'+os.path.basename(os.path.splitext(filename)[0]+'.png') + '" type="image/jpeg"></object>')
 
         doc.asis(html_table)
 
