@@ -1,13 +1,12 @@
 import joblib
 import time
 import os
-import keras
 import base64
 import io
 from yattag import Doc
 import datetime
 from datetime import timedelta
-import xlrd
+from xlrd.xldate import xldate_as_datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,6 +20,13 @@ from sklearn.metrics import mean_squared_error
 from pandas import ExcelWriter
 
 from mpl_toolkits.mplot3d import Axes3D
+
+'''
+TF_CPP_MIN_LOG_LEVEL:
+Defaults to 0, so all logs are shown. Set TF_CPP_MIN_LOG_LEVEL to 1 to filter out INFO logs, 2 to additionally filter out WARNING, 3 to additionally filter out ERROR.
+'''
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+import keras
 
 class NNetwork:
 
@@ -129,8 +135,8 @@ class NNetwork:
         durations = []
         if start_date.dtype == 'float64':  # Excel type
             for i in range(len(start_date)):
-                start = xlrd.xldate.xldate_as_datetime(start_date[i], datemode=0)
-                end = xlrd.xldate.xldate_as_datetime(end_date[i], datemode=0)
+                start = xldate_as_datetime(start_date[i], datemode=0)
+                end = xldate_as_datetime(end_date[i], datemode=0)
                 durations.append(end - start)
 
         else:  # kobo type
@@ -235,19 +241,24 @@ class NNetwork:
         end_date = self.file["hh_datetime"]
 
         durations = []
-        if start_date.dtype == 'float64':  # Excel type
-            for i in range(len(start_date)):
-                start = xlrd.xldate.xldate_as_datetime(start_date[i], datemode=0)
-                end = xlrd.xldate.xldate_as_datetime(end_date[i], datemode=0)
-                durations.append(end - start)
+        dateformat = "%Y-%m-%dT%H:%M"
 
-        else:  # kobo type
-            for i in range(len(start_date)):
-                temp_sta = start_date[i][:16]
-                temp_end = end_date[i][:16]
-                start = datetime.datetime.strptime(temp_sta, "%Y-%m-%dT%H:%M")
-                end = datetime.datetime.strptime(temp_end, "%Y-%m-%dT%H:%M")
-                durations.append(end - start)
+        for i in range(len(start_date)):
+            try:
+                # kobo type
+                start = float(start_date[i])
+                end = float(end_date[i])
+                start = xldate_as_datetime(start, datemode=0)
+                end = xldate_as_datetime(end, datemode=0)
+
+            except ValueError:
+                # excel type
+                start = start_date[i][:16]
+                end = end_date[i][:16]
+                start = datetime.datetime.strptime(start, dateformat)
+                end = datetime.datetime.strptime(end, dateformat)
+            
+            durations.append(end-start)
 
         sumdeltas = timedelta(seconds=0)
 
