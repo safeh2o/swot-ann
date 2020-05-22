@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from NNetwork import NNetwork
 import pandas as pd
 import numpy as np
