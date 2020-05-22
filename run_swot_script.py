@@ -4,10 +4,10 @@ import pandas as pd
 import numpy as np
 import datetime
 
-now=datetime.datetime.now()
+now = datetime.datetime.now()
 SWOT_net = NNetwork()
 input_file = sys.argv[1]
-directory = "dighr\\swot-python-analysis\\ModelRetraining\\"+now.strftime("%m%d%Y_%H%M%S")+"_"+input_file
+directory = "model_retraining" + os.sep + now.strftime("%m%d%Y_%H%M%S") + "_" + os.path.basename(input_file)
 results_file = sys.argv[3]
 report_file = sys.argv[4]
 
