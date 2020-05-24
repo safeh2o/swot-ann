@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/moselhy/Moes%20Sandbox/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/moselhy/Moes%20Sandbox/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/swot-dighr/SWOT/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/swot-dighr/SWOT/_build/latest?definitionId=2&branchName=master)
 
 # swot-python-analysis
 Repo for the Safe Water Optimization Tool ANN Model
