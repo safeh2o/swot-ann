@@ -75,7 +75,6 @@ def test_validations(tmp_path):
         nn.predict()
         nn.export_results_to_csv(out_csv)
         nn.generate_html_report(out_html)
-        nn.generate_input_info_plots(out_frc)
 
         after = os.listdir(outdir)
 
