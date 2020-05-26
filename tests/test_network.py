@@ -42,7 +42,7 @@ def test_import_pretrained_model():
 def test_validations(tmp_path):
     import pandas as pd
     import numpy as np
-    
+
     outdir = tmp_path / 'out'
     outdir.mkdir()
 
@@ -59,6 +59,7 @@ def test_validations(tmp_path):
         out_csv = os.path.join(outdir, 'test_output_%s.csv' % str(i+1))
         out_html = os.path.join(outdir, 'test_output_report_%s.html' % str(i+1))
         out_diagram = out_html.rstrip('.html') + '.png'
+        out_frc = out_html.rstrip('.html') + '-frc.jpg'
 
         nn = NNetwork()
 
@@ -74,15 +75,13 @@ def test_validations(tmp_path):
         nn.predict()
         nn.export_results_to_csv(out_csv)
         nn.generate_html_report(out_html)
+        nn.generate_input_info_plots(out_frc)
 
         after = os.listdir(outdir)
 
         diff = set(after) - set(before)
 
-        assert len(diff) == 3
-        assert os.path.isfile(out_csv)
-        assert os.stat(out_csv).st_size > 0
-        assert os.path.isfile(out_diagram)
-        assert os.stat(out_diagram).st_size > 0
-        assert os.path.isfile(out_html)
-        assert os.stat(out_html).st_size > 0
+        assert len(diff) == 4
+        for f in [out_csv, out_diagram, out_html, out_frc]:
+            assert os.path.isfile(f)
+            assert os.stat(f).st_size > 0
