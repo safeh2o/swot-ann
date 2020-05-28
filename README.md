@@ -1,7 +1,7 @@
 [![Build Status](https://dev.azure.com/swot-dighr/SWOT/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/swot-dighr/SWOT/_build/latest?definitionId=2&branchName=master)
 
 # swot-python-analysis
-Repo for the Safe Water Optimization Tool ANN Model
+Safe Water Optimization Tool ANN Model
 
 The implementation of the network is encapsulated in a single class called
 NNetwork. This class has all the necessary methods to create a neural network
@@ -68,9 +68,10 @@ where:
 i.e. `python run_swot_script SWOTAllData.csv untitled_network results.csv`
 `
 
-#### Libraries
+### Requirements
 
 Install the following libraries for the Network to work:
+(Or run pip install -r requirements.txt)
 1. keras - a more user-friendly library for building neural networks
 2. Tensorflow - Tensorflow is the ML library
 3. numpy - adds necessary math functions
