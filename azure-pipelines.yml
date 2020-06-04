@@ -24,12 +24,12 @@ steps:
 
 - script: |
     echo Installing requirements...
-    pip install -r $(Build.SourcesDirectory)/requirements.txt
+    make
+    make dependencies
 
 - script: |
     echo Running tests:
-    pip install -U pytest
-    cd tests
-    pytest
+    chmod 700 tests.sh
+    ./tests.sh
 
   displayName: 'Run tests'
