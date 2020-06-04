@@ -58,27 +58,51 @@ This script makes predictions on inputs from a csv file, using a pretrained SWOT
 outputs the results in the console and saves the results in a csv file. This script is called by
 the command line. The script can be called using the following command:
 
-`python run_swot_script arg1 arg2 arg3`
+`python run_swot_script.py arg1 arg2 arg3 arg4`
 
 where:
 1. arg1: The csv file containing the inputs (ex. SWOTAllData.csv)
 2. arg2: The directory containing the pretrained models (ex. untitled_network)
 3. arg3: The output csv file (ex. results.csv)
+4. arg4: The output HTML report file (ex. results.html)
 
-i.e. `python run_swot_script SWOTAllData.csv untitled_network results.csv`
-`
+i.e. `python run_swot_script.py SWOTAllData.csv untitled_network results.csv results.html`
 
 ### Requirements
 
-Install the following libraries for the Network to work:
-(Or run pip install -r requirements.txt)
-1. keras - a more user-friendly library for building neural networks
-2. Tensorflow - Tensorflow is the ML library
-3. numpy - adds necessary math functions
-4. matplotlib - for figure production
-5. pandas - for data structure management
-6. sklearn - data science library, contains MinMaxScaler for scaling inputs and outputs, as well as several built in performance metrics
-7. Pillow
-8. xlrd - for reading excel libraries
-9. Yattag - for HTML reporting
+The network uses the following Python libraries, see [setup](#setup):
+- keras - a more user-friendly library for building neural networks
+- tensorflow - Tensorflow is the ML library
+- numpy - adds necessary math functions
+- matplotlib - for figure production
+- pandas - for data structure management
+- sklearn - data science library, contains MinMaxScaler for scaling inputs and outputs, as well as several built in performance metrics
+- pillow
+- xlrd - for reading excel libraries
+- yattag - for HTML reporting
+- pytest (optional) - for testing the model
 
+## Setup
+
+Clone or download this repository, then run the following to create a virtual environment:
+
+#### On a Linux or Mac terminal, from the repository folder:
+- `make`
+- `make dependencies`
+
+#### On Windows, run the following in Command Prompt from the repository folder:
+- `python3 -m venv env` to create the virtual environment
+- `start env\Scripts\activate.bat` to activate the environment
+- `pip install -r requirements.txt` to install the required libraries
+
+Activate the environment before running the [scripts](#scripts):
+- `source env/bin/activate` on Linux/Mac
+- `start env\Scripts\activate.bat` on Windows
+- `python run_swot_scripts.py args`
+
+
+### Testing
+
+There are five sample datasets included in the `tests` directory. To test the model, [setup the system](#setup), then:
+- Linux/Mac: `make test`
+- Windows: activate the environment, then run `pytest`

@@ -1,12 +1,15 @@
+envname = env
+
 venv:
-	python -m venv env
+	python3 -m venv $(envname)
 
-dependencies: env
-	. env/bin/activate
+dependencies: venv
+	. $(envname)/bin/activate
 	pip install -r requirements.txt
-	pip install pytest
 
-test: env
-	. env/bin/activate
+test: dependencies
+	. $(envname)/bin/activate
 	pytest
 	
+clean:
+	rm -rf $(envname) __pycache__ .pytest_cache
