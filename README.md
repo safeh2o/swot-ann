@@ -21,6 +21,12 @@ v1.3 (May 20, 2020) - Updates include:
   2. Changed from using a fixed number of epochs for training to using an early stopping procedure based on validation MSE with a patience of 10 epochs. To ensure this works, training results are no longer saved to the self.history and instead the history is reset for each model in the ensemble.
   3. Forcing the model to randomize the weights and biases of each ANN in the ensemble to properly represent a multi-start ensemble.
 
+v1.4 (June 16, 2020) - Updates based on Trello card 66
+Network architecture modified based on network optimization research
+  1. Percentage of training data reduced to 25%
+  2. Number of hidden nodes increased to 10
+  3. Ensemble size increased to 200
+  4. Units for FRC fixed in results file graphs
 
 #### Training Workflow
 
