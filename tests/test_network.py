@@ -33,9 +33,6 @@ def test_import_pretrained_model():
     import sklearn
     nn = NNetwork()
     nn.import_pretrained_model(pretrained_model_path)
-    assert len(nn.pretrained_networks) == 100
-    assert isinstance(nn.predictors_scaler, sklearn.preprocessing.MinMaxScaler)
-    assert isinstance(nn.targets_scaler, sklearn.preprocessing.MinMaxScaler)
     assert nn.predictors_scaler.n_samples_seen_ == 533
     assert nn.targets_scaler.n_samples_seen_ == 533
 
