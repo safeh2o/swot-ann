@@ -4,11 +4,11 @@ venv:
 	python3 -m venv $(envname)
 
 dependencies: venv
-	. $(envname)/bin/activate
+	. $(envname)/bin/activate && \
 	pip install -r requirements.txt
 
 test: dependencies
-	. $(envname)/bin/activate
+	. $(envname)/bin/activate && \
 	pytest
 	
 clean:
