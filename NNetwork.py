@@ -1,7 +1,6 @@
 import joblib
 import time
 import os
-import keras
 import base64
 import io
 from yattag import Doc
@@ -36,7 +35,7 @@ class NNetwork:
         self.model = None
         self.pretrained_networks = []
 
-        self.software_version = "1.4"
+        self.software_version = "1.3"
         self.input_filename = None
         self.today = str(datetime.date.today())
         self.avg_time_elapsed = timedelta(seconds=0)
@@ -47,7 +46,7 @@ class NNetwork:
         self.history = None
         self.file = None
 
-        self.layer1_neurons = 10
+        self.layer1_neurons = 5
         self.epochs =1000
 
         self.predictors = None
@@ -305,9 +304,9 @@ class NNetwork:
 
         self.input_filename = filename
     def train_SWOT_network(self, directory):
-        """Train the set of 200 neural networks on SWOT data
+        """Train the set of 100 neural networks on SWOT data
 
-        Trains an ensemble of 200 neural networks on se1_frc, water temperature,
+        Trains an ensemble of 100 neural networks on se1_frc, water temperature,
         water conductivity."""
 
         self.predictors_scaler = self.predictors_scaler.fit(self.predictors)
@@ -335,7 +334,7 @@ class NNetwork:
 
         json_file.close()
 
-        for i in range(0, 200):
+        for i in range(0, 100):
             print('Training Network ' + str(i))
             self.train_network(x, t)
             self.model.save_weights(directory + os.sep + "network_weights" + os.sep + "network" + str(i) + ".h5")
@@ -375,7 +374,7 @@ class NNetwork:
         x_norm=self.predictors_scaler.transform(x)
         t_norm=self.targets_scaler.transform(t)
 
-        x_norm_train, xx, t_norm_train, tt = train_test_split(x_norm, t_norm, test_size=0.25, shuffle=True)
+        x_norm_train, xx, t_norm_train, tt = train_test_split(x_norm, t_norm, test_size=0.5, shuffle=True)
         x_norm_val, x_norm_test, t_norm_val, t_norm_test, = train_test_split(xx, tt, test_size=0.5, shuffle=True)
         new_weights = [np.random.uniform(-0.05, 0.05, w.shape) for w in self.model.get_weights()]
         self.model.set_weights(new_weights)
@@ -445,8 +444,8 @@ class NNetwork:
 
         This method makes predictions on data loaded to the network by the import_data_from_excel/csv() methods.
         To make the predictions, a pretrained model must be loaded using the import_pretrained_model() method.
-        The SWOT ANN uses an ensemble of 200 ANNs. All of the 200 ANNs make a prediction on the inputs and the results are
-        stored. The median of all the 200 predictions is calculated and stored here.
+        The SWOT ANN uses an ensemble of 100 ANNs. All of the 100 ANNs make a prediction on the inputs and the results are
+        stored. The median of all the 100 predictions is calculated and stored here.
 
         The method also calculates the probabilities of the target FRC levels to be less than 0.2, 0.25 and 0.3 mg/L respectively.
 
@@ -466,7 +465,7 @@ class NNetwork:
         input_scaler = self.predictors_scaler
         inputs_norm = input_scaler.transform(self.predictors)
 
-        # Iterate through all 200 pretrained networks, make predictions based on the inputs,
+        # Iterate through all 100 pretrained networks, make predictions based on the inputs,
         # calculate the median of the predictions and store everything to self.results
         for j, network in enumerate(self.pretrained_networks):
             key = "se4_frc_net-" + str(j)
@@ -484,7 +483,7 @@ class NNetwork:
 
         # Calculate all the probability fields and store them to self.results
         for k in range(len(self.results['median'])):
-            row = self.results.iloc[k, 0:200].to_numpy()
+            row = self.results.iloc[k, 0:100].to_numpy()
             count_02 = 0
             count_025 = 0
             count_03 = 0
@@ -577,7 +576,7 @@ class NNetwork:
         ts_legend = "Validation Avg. R^2: {rs:.3f}".format(rs=self.avg_rsq_test)
         ax.legend([tr_legend, val_legend, ts_legend])
 
-        fig.suptitle("Performance metrics across 200 training runs on " +
+        fig.suptitle("Performance metrics across 100 training runs on " +
                      str(self.epochs) + " epochs, with " + str(self.layer1_neurons) + " neurons on hidden layer.")
         fig.set_size_inches(12, 8)
 
@@ -764,13 +763,13 @@ class NNetwork:
 
         axHouseholdFRC = fig.add_subplot(224)
         axHouseholdFRC.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
-        axHouseholdFRC.set_xlabel('Household FRC (mg/L)')
+        axHouseholdFRC.set_xlabel('Household FRC (μS/cm)')
         axHouseholdFRC.set_ylabel('# of instances')
         mean = round(np.mean(frc4), 2)
         median = np.median(frc4)
         mean_line = axHouseholdFRC.axvline(mean, color='r', linestyle='dashed', linewidth=2)
         median_line = axHouseholdFRC.axvline(median, color='y', linestyle='dashed', linewidth=2)
-        axHouseholdFRC.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (mg/L)', 'Median: ' + str(median) + ' (mg/L)'))
+        axHouseholdFRC.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
 
         fig.savefig(os.path.splitext(filename)[0]+'.png', format='png')
         # plt.show()
@@ -790,13 +789,13 @@ class NNetwork:
 
         axHouseholdFRC = figFRC.add_subplot(223)
         axHouseholdFRC.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
-        axHouseholdFRC.set_xlabel('Household FRC (mg/L)')
+        axHouseholdFRC.set_xlabel('Household FRC (μS/cm)')
         axHouseholdFRC.set_ylabel('# of instances')
         mean = round(np.mean(frc4), 2)
         median = np.median(frc4)
         mean_line = axHouseholdFRC.axvline(mean, color='r', linestyle='dashed', linewidth=2)
         median_line = axHouseholdFRC.axvline(median, color='y', linestyle='dashed', linewidth=2)
-        axHouseholdFRC.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (mg/L)', 'Median: ' + str(median) + ' (mg/L)'))
+        axHouseholdFRC.legend((mean_line, median_line), ('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
 
         figFRC.savefig(os.path.splitext(filename)[0]+'-frc.jpg', format='jpg')
 
@@ -966,7 +965,7 @@ class NNetwork:
         return my_base_64_jpgData '''
 
     '''def generate_histogram(self):
-        temp = self.results.iloc[0, 0:200].to_numpy()
+        temp = self.results.iloc[0, 0:100].to_numpy()
 
         j = 0
         for i in temp:
