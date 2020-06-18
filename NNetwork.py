@@ -26,7 +26,7 @@ TF_CPP_MIN_LOG_LEVEL:
 Defaults to 0, so all logs are shown. Set TF_CPP_MIN_LOG_LEVEL to 1 to filter out INFO logs, 2 to additionally filter out WARNING, 3 to additionally filter out ERROR.
 '''
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-import keras
+from tensorflow import keras
 
 class NNetwork:
 
@@ -257,7 +257,7 @@ class NNetwork:
                 end = end_date[i][:16]
                 start = datetime.datetime.strptime(start, dateformat)
                 end = datetime.datetime.strptime(end, dateformat)
-            
+
             durations.append(end-start)
 
         sumdeltas = timedelta(seconds=0)
@@ -672,13 +672,13 @@ class NNetwork:
         ax = fig.add_subplot(222)
         img = ax.scatter(frc, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('FRC at tapstand (mg/L)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (\u03BCS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(223)
         img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (\u03BCS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(224)
@@ -753,13 +753,13 @@ class NNetwork:
 
         ax = fig.add_subplot(223)
         ax.hist(cond, bins=20, edgecolor='black', linewidth=0.1)
-        ax.set_xlabel('Water Conductivity (μS/cm)')
+        ax.set_xlabel('Water Conductivity (\u03BCS/cm)')
         ax.set_ylabel('# of instances')
         mean = round(np.mean(cond), 2)
         median = np.median(cond)
         mean_line = ax.axvline(mean, color='r', linestyle='dashed', linewidth=2)
         median_line = ax.axvline(median, color='y', linestyle='dashed', linewidth=2)
-        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' (μS/cm)', 'Median: ' + str(median) + ' (μS/cm)'))
+        ax.legend((mean_line, median_line),('Mean: ' + str(mean) + ' (\u03BCS/cm)', 'Median: ' + str(median) + ' (\u03BCS/cm)'))
 
         axHouseholdFRC = fig.add_subplot(224)
         axHouseholdFRC.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
@@ -928,13 +928,13 @@ class NNetwork:
         ax = fig.add_subplot(222)
         img = ax.scatter(frc, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Initial FRC (mg/L)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (\u03BCS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(223)
         img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel('Water Temperature (' + u"\u00b0" + 'C)')
-        ax.set_ylabel('Water Conductivity (μS/cm)')
+        ax.set_ylabel('Water Conductivity (\u03BCS/cm)')
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(224)
