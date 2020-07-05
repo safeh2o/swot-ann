@@ -163,18 +163,20 @@ class NNetwork:
             today = self.file.loc[i, 'formatted_date']
             same_days = self.file[self.file['formatted_date'] == today]
             temps = same_days[WATTEMP].dropna().to_numpy()
-            avg_daily_temp = np.mean(temps)
-            self.file.loc[i, WATTEMP] = avg_daily_temp
+            if len(temps):
+                avg_daily_temp = np.mean(temps)
+                self.file.loc[i, WATTEMP] = avg_daily_temp
         for i in nan_rows_cond.index:
             today = self.file.loc[i, 'formatted_date']
             same_days = self.file[self.file['formatted_date'] == today]
             conds = same_days[COND].dropna().to_numpy()
-            avg_daily_cond = np.mean(conds)
-            self.file.loc[i, COND] = avg_daily_cond
+            if len(conds):
+                avg_daily_cond = np.mean(conds)
+                self.file.loc[i, COND] = avg_daily_cond
 
-        # From these rows get the temperatures and avg them
-
-        # self.file.dropna(subset=[WATTEMP], how='all', inplace=True)
+        # For rows with missing data with no other rows sharing the same day, fill them with the average data in the set
+        self.file[WATTEMP].fillna(self.file[WATTEMP].dropna().mean(), inplace=True)
+        self.file[COND].fillna(self.file[COND].dropna().mean(), inplace=True)
 
         self.predictors = self.file.loc[:, [FRC_IN, WATTEMP, COND]]
         self.datainputs = self.predictors
