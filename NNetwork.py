@@ -84,7 +84,7 @@ class NNetwork:
         """
 
         df = pd.read_csv(filename)
-        self.file = df
+        self.file = df.copy()
 
         global FRC_IN
         global FRC_OUT
@@ -114,6 +114,9 @@ class NNetwork:
         self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
         self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
         self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
+
+        self.skippedRows = df.loc[df.index.difference(self.file.index)]
+
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
         self.median_cond = np.median(self.file[COND].dropna().to_numpy())
@@ -698,6 +701,8 @@ class NNetwork:
         # scatterplots_b64 = self.generate_2d_scatterplot().decode('UTF-8')
         html_table = self.prepare_table_for_html_report()
 
+        skipped_rows_table = self.skipped_rows_html()
+
         doc, tag, text, line = Doc().ttl()
         with tag('h1', klass='title'):
             text('SWOT ARTIFICIAL NEURAL NETWORK REPORT')
@@ -722,6 +727,8 @@ class NNetwork:
 
         doc.asis(html_table)
 
+        doc.asis(skipped_rows_table)
+
         file = open(filename, 'w+')
         file.write(doc.getvalue())
         file.close()
@@ -730,8 +737,6 @@ class NNetwork:
 
     def prepare_table_for_html_report(self):
         """Formats the results into an html table for display."""
-
-        temp = self.results
 
         table_df = pd.DataFrame()
         table_df['Input FRC (mg/L)'] = self.results[FRC_IN]
@@ -745,7 +750,18 @@ class NNetwork:
 
         str_io = io.StringIO()
 
-        html = table_df.to_html(buf=str_io, classes='tabular_results')
+        table_df.to_html(buf=str_io, table_id='annTable')
+        html_str = str_io.getvalue()
+        return html_str
+
+    def skipped_rows_html(self):
+        if self.skippedRows.empty:
+            return ""
+
+        str_io = io.StringIO()
+
+        printable_columns = ['ts_datetime', FRC_IN, 'hh_datetime', FRC_OUT, WATTEMP, COND]
+        self.skippedRows[printable_columns].to_html(buf=str_io, index=False, table_id='pythonSkipped')
         html_str = str_io.getvalue()
         return html_str
 
