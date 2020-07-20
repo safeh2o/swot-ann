@@ -732,11 +732,16 @@ class NNetwork:
         doc.asis(html_table)
 
         doc.asis(skipped_rows_table)
-        
+
+        totalmatches = 0
         if len(self.ruleset):
             with tag('ul', id='ann_ruleset'):
                 for rule in self.ruleset:
+                    totalmatches += rule[1]
                     line('li', '%s. Matches: %d' % rule)
+
+        with tag('div', id='pythonSkipped_count'):
+            text(totalmatches)
 
         file = open(filename, 'w+')
         file.write(doc.getvalue())
