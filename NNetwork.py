@@ -45,6 +45,9 @@ class NNetwork:
         self.history = None
         self.file = None
 
+        self.skipped_rows = []
+        self.ruleset = []
+
         self.layer1_neurons = 5
         self.epochs =1000
 
@@ -110,12 +113,13 @@ class NNetwork:
             COND = 'ts_cond'
             FRC_OUT = "hh_frc"
 
-        self.file.dropna(subset=[FRC_IN], how='all', inplace=True)
-        self.file.dropna(subset=[FRC_OUT], how='all', inplace=True)
-        self.file.dropna(subset=['ts_datetime'], how='all', inplace=True)
-        self.file.dropna(subset=['hh_datetime'], how='all', inplace=True)
+        # Standardize the DataFrame with rules specified in the method `standardize`
+        self.execute_rule('Invalid tapstand FRC', self.file[FRC_IN].isnull())
+        self.execute_rule('Invalid household FRC', self.file[FRC_OUT].isnull())
+        self.execute_rule('Invalid tapstand date/time', self.file['ts_datetime'].isnull())
+        self.execute_rule('Invalid household date/time', self.file['hh_datetime'].isnull())
 
-        self.skippedRows = df.loc[df.index.difference(self.file.index)]
+        self.skipped_rows = df.loc[df.index.difference(self.file.index)]
 
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
         self.median_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
@@ -728,6 +732,11 @@ class NNetwork:
         doc.asis(html_table)
 
         doc.asis(skipped_rows_table)
+        
+        if len(self.ruleset):
+            with tag('ul', id='ann_ruleset'):
+                for rule in self.ruleset:
+                    line('li', '%s. Matches: %d' % rule)
 
         file = open(filename, 'w+')
         file.write(doc.getvalue())
@@ -755,15 +764,21 @@ class NNetwork:
         return html_str
 
     def skipped_rows_html(self):
-        if self.skippedRows.empty:
+        if self.skipped_rows.empty:
             return ""
 
         str_io = io.StringIO()
 
         printable_columns = ['ts_datetime', FRC_IN, 'hh_datetime', FRC_OUT, WATTEMP, COND]
-        self.skippedRows[printable_columns].to_html(buf=str_io, index=False, table_id='pythonSkipped')
+        self.skipped_rows[printable_columns].to_html(buf=str_io, index=False, table_id='pythonSkipped')
         html_str = str_io.getvalue()
         return html_str
+
+    def execute_rule(self, description, matches):
+        if sum(matches):
+            rule = (description, sum(matches))
+            self.ruleset.append(rule)
+            self.file.drop(self.file.loc[matches].index, inplace=True)
 
     '''def save_2d_scatterplot_svg(self):
 
