@@ -190,6 +190,7 @@ class NNetwork:
         self.targets = self.file.loc[:, FRC_OUT].values.reshape(-1, 1)
 
         self.input_filename = filename
+
     def train_SWOT_network(self, directory):
         """Train the set of 100 neural networks on SWOT data
 
@@ -772,12 +773,28 @@ class NNetwork:
         if self.skipped_rows.empty:
             return ""
 
-        str_io = io.StringIO()
-
         printable_columns = ['ts_datetime', FRC_IN, 'hh_datetime', FRC_OUT, WATTEMP, COND]
-        self.skipped_rows[printable_columns].to_html(buf=str_io, index=False, table_id='pythonSkipped')
-        html_str = str_io.getvalue()
-        return html_str
+
+        doc, tag, text, line = Doc().ttl()
+
+        with tag('table', klass="table center fill-whitespace", id='pythonSkipped', border='1'):
+            with tag('thead'):
+                with tag('tr'):
+                    for col in printable_columns:
+                        with tag('th'): text(col)
+            with tag('tbody'):
+                for (_, row) in self.skipped_rows[printable_columns].iterrows():
+                    with tag('tr'):
+                        for col in printable_columns:
+                            with tag('td'):
+                                # check if cell is nan
+                                if not row[col] or row[col] != row[col]:
+                                    with tag('div', klass='red-cell'):
+                                        text('')
+                                else:
+                                    text(row[col])
+        
+        return doc.getvalue()
 
     def execute_rule(self, description, matches):
         if sum(matches):
