@@ -113,7 +113,8 @@ class NNetwork:
             COND = 'ts_cond'
             FRC_OUT = "hh_frc"
 
-        # Standardize the DataFrame with rules specified in the method `standardize`
+        # Standardize the DataFrame by specifying rules
+        # To add a new rule, call the method execute_rule with the parameters (description, affected_column, query)
         self.execute_rule('Invalid tapstand FRC', FRC_IN, self.file[FRC_IN].isnull())
         self.execute_rule('Invalid household FRC', FRC_OUT, self.file[FRC_OUT].isnull())
         self.execute_rule('Invalid tapstand date/time', 'ts_datetime', self.file['ts_datetime'].isnull())
