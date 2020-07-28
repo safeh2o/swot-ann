@@ -114,10 +114,10 @@ class NNetwork:
             FRC_OUT = "hh_frc"
 
         # Standardize the DataFrame with rules specified in the method `standardize`
-        self.execute_rule('Invalid tapstand FRC', self.file[FRC_IN].isnull())
-        self.execute_rule('Invalid household FRC', self.file[FRC_OUT].isnull())
-        self.execute_rule('Invalid tapstand date/time', self.file['ts_datetime'].isnull())
-        self.execute_rule('Invalid household date/time', self.file['hh_datetime'].isnull())
+        self.execute_rule('Invalid tapstand FRC', FRC_IN, self.file[FRC_IN].isnull())
+        self.execute_rule('Invalid household FRC', FRC_OUT, self.file[FRC_OUT].isnull())
+        self.execute_rule('Invalid tapstand date/time', 'ts_datetime', self.file['ts_datetime'].isnull())
+        self.execute_rule('Invalid household date/time', 'hh_datetime', self.file['hh_datetime'].isnull())
 
         self.skipped_rows = df.loc[df.index.difference(self.file.index)]
 
@@ -738,8 +738,8 @@ class NNetwork:
         if len(self.ruleset):
             with tag('ul', id='ann_ruleset'):
                 for rule in self.ruleset:
-                    totalmatches += rule[1]
-                    line('li', '%s. Matches: %d' % rule)
+                    totalmatches += rule[2]
+                    line('li', '%s. Matches: %d' % (rule[0], rule[2]))
 
         with tag('div', id='pythonSkipped_count'):
             text(totalmatches)
@@ -774,8 +774,9 @@ class NNetwork:
             return ""
 
         printable_columns = ['ts_datetime', FRC_IN, 'hh_datetime', FRC_OUT, WATTEMP, COND]
+        required_columns = [rule[1] for rule in self.ruleset]
 
-        doc, tag, text, line = Doc().ttl()
+        doc, tag, text = Doc().tagtext()
 
         with tag('table', klass="table center fill-whitespace", id='pythonSkipped', border='1'):
             with tag('thead'):
@@ -787,19 +788,19 @@ class NNetwork:
                     with tag('tr'):
                         for col in printable_columns:
                             with tag('td'):
-                                # check if cell is nan
-                                if not row[col] or row[col] != row[col]:
+                                # check if required value in cell is nan
+                                if col in required_columns and (not row[col] or row[col] != row[col]):
                                     with tag('div', klass='red-cell'):
                                         text('')
                                 else:
                                     text(row[col])
-        
+
         return doc.getvalue()
 
-    def execute_rule(self, description, matches):
+    def execute_rule(self, description, column, matches):
+        rule = (description, column, sum(matches))
+        self.ruleset.append(rule)
         if sum(matches):
-            rule = (description, sum(matches))
-            self.ruleset.append(rule)
             self.file.drop(self.file.loc[matches].index, inplace=True)
 
     '''def save_2d_scatterplot_svg(self):
