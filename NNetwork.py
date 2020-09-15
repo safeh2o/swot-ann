@@ -657,7 +657,7 @@ class NNetwork:
         # plt.show()
 
         # create figure for initial and household FRC separately in a single image
-        figFRC = plt.figure(figsize=(19.2/2, 5.4), dpi=100)
+        figFRC = plt.figure(figsize=(19.2/2, 5.4/2), dpi=100)
 
         axInitialFRC = figFRC.add_subplot(211)
         axInitialFRC.hist(frc, bins=20, edgecolor='black', linewidth=0.1)
