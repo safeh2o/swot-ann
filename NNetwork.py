@@ -543,8 +543,6 @@ class NNetwork:
         bounds = np.linspace(0, 1.4, 8)
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
-        fig = plt.figure()
-
         fig = plt.figure(figsize=(19.2, 10.8), dpi=100)
 
         ax = fig.add_subplot(221)
@@ -659,9 +657,9 @@ class NNetwork:
         # plt.show()
 
         # create figure for initial and household FRC separately in a single image
-        figFRC = plt.figure(figsize=(19.2, 5.4), dpi=100)
+        figFRC = plt.figure(figsize=(19.2/2, 5.4), dpi=100)
 
-        axInitialFRC = figFRC.add_subplot(221)
+        axInitialFRC = figFRC.add_subplot(211)
         axInitialFRC.hist(frc, bins=20, edgecolor='black', linewidth=0.1)
         axInitialFRC.set_xlabel('Initial FRC (mg/L)')
         axInitialFRC.set_ylabel('# of instances')
@@ -671,7 +669,7 @@ class NNetwork:
         median_line = axInitialFRC.axvline(median, color='y', linestyle='dashed', linewidth=2)
         axInitialFRC.legend((mean_line, median_line),('Mean: ' + str(mean) + ' mg/L', 'Median: ' + str(median) + ' mg/L'))
 
-        axHouseholdFRC = figFRC.add_subplot(223)
+        axHouseholdFRC = figFRC.add_subplot(212)
         axHouseholdFRC.hist(frc4, bins=np.linspace(0,2,41), edgecolor='black', linewidth=0.1)
         axHouseholdFRC.set_xlabel('Household FRC (μS/cm)')
         axHouseholdFRC.set_ylabel('# of instances')
