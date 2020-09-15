@@ -1,4 +1,6 @@
 /env/
+/winenv/
 __pycache__/
 tests/out/
 .vscode/
+model_retraining/*/
