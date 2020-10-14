@@ -31,6 +31,7 @@ class NNetwork:
 
     def __init__(self):
 
+        self.xl_dateformat = r"%Y-%m-%dT%H:%M"
         self.model = None
         self.pretrained_networks = []
 
@@ -117,8 +118,9 @@ class NNetwork:
         # To add a new rule, call the method execute_rule with the parameters (description, affected_column, query)
         self.execute_rule('Invalid tapstand FRC', FRC_IN, self.file[FRC_IN].isnull())
         self.execute_rule('Invalid household FRC', FRC_OUT, self.file[FRC_OUT].isnull())
-        self.execute_rule('Invalid tapstand date/time', 'ts_datetime', self.file['ts_datetime'].isnull())
-        self.execute_rule('Invalid household date/time', 'hh_datetime', self.file['hh_datetime'].isnull())
+        self.execute_rule('Invalid tapstand date/time', 'ts_datetime', self.valid_dates(self.file['ts_datetime']))
+        self.execute_rule('Invalid household date/time', 'hh_datetime', self.valid_dates(self.file['hh_datetime'])
+
 
         self.skipped_rows = df.loc[df.index.difference(self.file.index)]
 
@@ -130,7 +132,6 @@ class NNetwork:
         end_date = self.file["hh_datetime"]
 
         durations = []
-        xl_dateformat = r"%Y-%m-%dT%H:%M"
         all_dates = []
 
         for i in range(len(start_date)):
@@ -145,8 +146,8 @@ class NNetwork:
                 # excel type
                 start = start_date[i][:16]
                 end = end_date[i][:16]
-                start = datetime.datetime.strptime(start, xl_dateformat)
-                end = datetime.datetime.strptime(end, xl_dateformat)
+                start = datetime.datetime.strptime(start, self.xl_dateformat)
+                end = datetime.datetime.strptime(end, self.xl_dateformat)
 
             durations.append(end-start)
             all_dates.append(datetime.datetime.strftime(start, r"%Y-%m-%d"))
@@ -795,6 +796,28 @@ class NNetwork:
                                     text(row[col])
 
         return doc.getvalue()
+
+    def valid_dates(self, series):
+        mask = []
+        for i in range(len(series)):
+            row = series[i]
+            if row == None:
+                mask.append(True)
+                continue
+            if isinstance(row, str):
+                try:
+                    datetime.datetime.strptime(row[:16], self.xl_dateformat)
+                    mask.append(False)
+                except:
+                    mask.append(True)
+            else:
+                try:
+                    start = float(row)
+                    start = xldate_as_datetime(start, datemode=0)
+                    mask.append(False)
+                except:
+                    mask.append(True)
+        return mask
 
     def execute_rule(self, description, column, matches):
         rule = (description, column, sum(matches))
