@@ -119,7 +119,7 @@ class NNetwork:
         self.execute_rule('Invalid tapstand FRC', FRC_IN, self.file[FRC_IN].isnull())
         self.execute_rule('Invalid household FRC', FRC_OUT, self.file[FRC_OUT].isnull())
         self.execute_rule('Invalid tapstand date/time', 'ts_datetime', self.valid_dates(self.file['ts_datetime']))
-        self.execute_rule('Invalid household date/time', 'hh_datetime', self.valid_dates(self.file['hh_datetime'])
+        self.execute_rule('Invalid household date/time', 'hh_datetime', self.valid_dates(self.file['hh_datetime']))
 
 
         self.skipped_rows = df.loc[df.index.difference(self.file.index)]
@@ -799,7 +799,7 @@ class NNetwork:
 
     def valid_dates(self, series):
         mask = []
-        for i in range(len(series)):
+        for i in series.index.to_numpy():
             row = series[i]
             if row == None:
                 mask.append(True)
