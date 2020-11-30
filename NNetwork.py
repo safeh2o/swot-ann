@@ -50,7 +50,8 @@ class NNetwork:
         self.ruleset = []
 
         self.layer1_neurons = 5
-        self.epochs =1000
+        self.network_count = 100
+        self.epochs = 1000
 
         self.predictors = None
 
@@ -224,7 +225,7 @@ class NNetwork:
 
         json_file.close()
 
-        for i in range(0, 100):
+        for i in range(self.network_count):
             print('Training Network ' + str(i))
             self.train_network(x, t)
             self.model.save_weights(directory + os.sep + "network_weights" + os.sep + "network" + str(i) + ".h5")
@@ -320,7 +321,6 @@ class NNetwork:
             temp.load_weights(directory + os.sep + 'network_weights' + os.sep + network)
             self.pretrained_networks.append(temp)
             print(network + "loaded")
-            del temp
 
         # Load the scalers used for normalizing the data before training
         # the NN (see train_SWOT_network()).
