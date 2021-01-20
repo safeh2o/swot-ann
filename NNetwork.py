@@ -137,21 +137,21 @@ class NNetwork:
 
         for i in range(len(start_date)):
             try:
-                # kobo type
+                # excel type
                 start = float(start_date[i])
                 end = float(end_date[i])
                 start = xldate_as_datetime(start, datemode=0)
                 end = xldate_as_datetime(end, datemode=0)
 
             except ValueError:
-                # excel type
-                start = start_date[i][:16]
-                end = end_date[i][:16]
+                # kobo type
+                start = start_date[i][:16].replace('/','-')
+                end = end_date[i][:16].replace('/','-')
                 start = datetime.datetime.strptime(start, self.xl_dateformat)
                 end = datetime.datetime.strptime(end, self.xl_dateformat)
 
             durations.append(end-start)
-            all_dates.append(datetime.datetime.strftime(start, r"%Y-%m-%d"))
+            all_dates.append(datetime.datetime.strftime(start, self.xl_dateformat))
 
 
         sumdeltas = timedelta(seconds=0)
@@ -806,7 +806,7 @@ class NNetwork:
                 continue
             if isinstance(row, str):
                 try:
-                    datetime.datetime.strptime(row[:16], self.xl_dateformat)
+                    datetime.datetime.strptime(row[:16].replace('/','-'), self.xl_dateformat)
                     mask.append(False)
                 except:
                     mask.append(True)
