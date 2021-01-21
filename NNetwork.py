@@ -804,7 +804,7 @@ class NNetwork:
             if row == None:
                 mask.append(True)
                 continue
-            if isinstance(row, str):
+            if isinstance(row, str) and not row.replace('.','',1).isdigit():
                 try:
                     datetime.datetime.strptime(row[:16].replace('/','-'), self.xl_dateformat)
                     mask.append(False)
