@@ -9,7 +9,7 @@ dependencies: venv
 
 test: dependencies
 	. $(envname)/bin/activate && \
-	pytest
+	pytest tests/test_network.py::test_run_harness
 	
 clean:
 	rm -rf $(envname) __pycache__ .pytest_cache

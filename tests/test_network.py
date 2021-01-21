@@ -1,5 +1,5 @@
 # Add parent directory to path
-import os, sys, glob, unittest, shutil, pathlib
+import os, sys, glob, unittest, shutil, pathlib, contextlib
 
 testspath = pathlib.Path(__file__).parent.resolve()
 sys.path.insert(0, str((testspath / '..').resolve()))
@@ -11,7 +11,27 @@ from NNetwork import NNetwork
 test_model_output_prefix = 'trained_'
 pretrained_model_path = os.path.realpath(os.path.join(os.path.dirname(__file__), 'pretrained'))
 test_files = [str(x) for x in testspath.glob('test*.csv')]
+TMP_OUTPUT_NAME = 'out.csv'
+TMP_REPORT_NAME = 'out.html'
 
+def test_run_harness():
+    import run_swot_script
+
+    @contextlib.contextmanager
+    def run_swot(filename):
+        sys._argv = sys.argv[:]
+        sys.argv = [sys.argv[0], filename, '', TMP_OUTPUT_NAME, TMP_REPORT_NAME]
+        yield
+        sys.argv = sys._argv
+
+    for file in test_files:
+        with run_swot(file):
+            run_swot_script.run_swot()
+            for f in [TMP_OUTPUT_NAME, TMP_REPORT_NAME]:
+                assert os.path.exists(f)
+                output_stat = os.stat(f)
+                assert output_stat.st_size > 0
+                os.remove(f)
 
 def test_creates_set(tmp_path):
     outdir = tmp_path / 'out'

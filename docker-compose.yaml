@@ -1,0 +1,14 @@
+version: "3.7"
+
+volumes:
+  pip-cache:
+    external: false
+
+services:
+  swot-python-analysis:
+    build: .
+    image: swot_python_analysis_app
+    volumes:
+      - .:/app
+      - pip-cache:/root/.cache/pip
+    command: ./start.sh
