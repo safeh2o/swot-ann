@@ -150,16 +150,11 @@ class NNetwork:
                 start = datetime.datetime.strptime(start, self.xl_dateformat)
                 end = datetime.datetime.strptime(end, self.xl_dateformat)
 
-            durations.append(end-start)
+            durations.append((end-start).total_seconds())
             all_dates.append(datetime.datetime.strftime(start, self.xl_dateformat))
 
 
-        sumdeltas = timedelta(seconds=0)
-
-        for i in range (0,len(durations)):
-            sumdeltas += abs(durations[i])
-
-        self.avg_time_elapsed = sumdeltas / (len(durations) - 1)
+        self.avg_time_elapsed = np.mean(durations)
 
         # Extract the column of dates for all data and put them in YYYY-MM-DD format
         self.file['formatted_date'] = all_dates
@@ -718,8 +713,8 @@ class NNetwork:
         with tag('p', klass='date'):
             text('Date Generated: ' + self.today)
         with tag('p', klass="time_difference"):
-            text("Average time between tapstand and household: " + str(self.avg_time_elapsed.seconds // 3600) + " hours and " +
-              str((self.avg_time_elapsed.seconds // 60) % 60) + " minutes")
+            text("Average time between tapstand and household: " + str(int(self.avg_time_elapsed // 3600))+ " hours and " +
+              str(int((self.avg_time_elapsed // 60) % 60)) + " minutes")
         with tag('p'):
             text('Total Samples: ' + str(len(frc)))
         with tag('p'):
