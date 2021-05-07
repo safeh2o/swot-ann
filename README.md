@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/dighr-swot/SWOT/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/dighr-swot/SWOT/_build/latest?definitionId=2&branchName=master)
+[![Build Status](https://dev.azure.com/safeh2o/SWOT/_apis/build/status/dighr.swot-python-analysis?branchName=master)](https://dev.azure.com/safeh2o/SWOT/_build/latest?definitionId=2&branchName=master)
 
 # swot-python-analysis
 Safe Water Optimization Tool ANN Model
