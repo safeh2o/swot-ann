@@ -10,6 +10,7 @@ from xlrd.xldate import xldate_as_datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams.update({'figure.autolayout': True})
 import pandas as pd
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
@@ -501,12 +502,12 @@ class NNetwork:
         plt.ylabel('Probability')
         ax3 = fig.axes[2]
         ax3.set_title('(c)', y=0.88, x=0.05)
-        plt.savefig(os.path.splitext(filename)[0]+  '_Calibration_Diagnostic_Figs.png', format='png')
+        plt.savefig(os.path.splitext(filename)[0]+  '_Calibration_Diagnostic_Figs.png', format='png',bbox_inches='tight')
 
         plt.close()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format='png')
+        plt.savefig(myStringIOBytes, format='png',bbox_inches='tight')
         myStringIOBytes.seek(0)
         my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_pngData
@@ -1231,10 +1232,10 @@ class NNetwork:
                 ax4.set_ylabel('Household FRC (mg/L)')
                 ax4.set_title('Worst Case - PM Collection')
                 plt.subplots_adjust(wspace=0.25)
-                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png',bbox_inches='tight')
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig1.pickle', 'wb'))
                 StringIOBytes_preds = io.BytesIO()
-                plt.savefig(StringIOBytes_preds, format='png')
+                plt.savefig(StringIOBytes_preds, format='png',bbox_inches='tight')
                 StringIOBytes_preds.seek(0)
                 preds_base_64_pngData = base64.b64encode(StringIOBytes_preds.read())
                 plt.close()
@@ -1259,9 +1260,9 @@ class NNetwork:
                 plt.legend(bbox_to_anchor=(0.999, 0.999), shadow=False, fontsize='small', ncol=1, labelspacing=0.1,
                            columnspacing=0.2, handletextpad=0.1, loc='upper right')
                 plt.subplots_adjust(bottom=0.15, right=0.95)
-                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png',bbox_inches='tight')
                 StringIOBytes_risk = io.BytesIO()
-                plt.savefig(StringIOBytes_risk, format='png')
+                plt.savefig(StringIOBytes_risk, format='png',bbox_inches='tight')
                 StringIOBytes_risk.seek(0)
                 risk_base_64_pngData = base64.b64encode(StringIOBytes_risk.read())
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig2.pickle', 'wb'))
@@ -1343,9 +1344,9 @@ class NNetwork:
                 ax4.set_ylabel('Household FRC (mg/L)')
                 ax4.set_title('Worst Case - PM Collection')
                 plt.subplots_adjust(wspace=0.25)
-                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png',bbox_inches='tight')
                 StringIOBytes_preds = io.BytesIO()
-                plt.savefig(StringIOBytes_preds, format='png')
+                plt.savefig(StringIOBytes_preds, format='png',bbox_inches='tight')
                 StringIOBytes_preds.seek(0)
                 preds_base_64_pngData = base64.b64encode(StringIOBytes_preds.read())
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig1.pickle', 'wb'))
@@ -1367,9 +1368,9 @@ class NNetwork:
                 plt.legend(bbox_to_anchor=(0.999, 0.999), shadow=False, fontsize='small', ncol=1, labelspacing=0.1,
                            columnspacing=0.2, handletextpad=0.1, loc='upper right')
 
-                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png',bbox_inches='tight')
                 StringIOBytes_risk = io.BytesIO()
-                plt.savefig(StringIOBytes_risk, format='png')
+                plt.savefig(StringIOBytes_risk, format='png',bbox_inches='tight')
                 StringIOBytes_risk.seek(0)
                 risk_base_64_pngData = base64.b64encode(StringIOBytes_risk.read())
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig2.pickle', 'wb'))
@@ -1410,12 +1411,12 @@ class NNetwork:
                 ax6.hist(self.dataoutputs, bins=30, color='grey')
                 plt.subplots_adjust(left=0.18, hspace=0.60, top=0.99, bottom=0.075, right=0.98)
 
-                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png',bbox_inches='tight')
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig3.pickle', 'wb'))
                 plt.close()
 
                 StringIOBytes_histogram = io.BytesIO()
-                plt.savefig(StringIOBytes_histogram, format='png')
+                plt.savefig(StringIOBytes_histogram, format='png',bbox_inches='tight')
                 StringIOBytes_histogram.seek(0)
                 hist_base_64_pngData = base64.b64encode(StringIOBytes_histogram.read())
 
@@ -1447,12 +1448,12 @@ class NNetwork:
                 ax5.hist(self.dataoutputs, bins=30, color='grey')
                 plt.subplots_adjust(left=0.18, hspace=0.60, top=0.99, bottom=0.075, right=0.98)
 
-                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png',bbox_inches='tight')
                 # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig3.pickle', 'wb'))
                 plt.close()
 
                 StringIOBytes_histogram = io.BytesIO()
-                plt.savefig(StringIOBytes_histogram, format='png')
+                plt.savefig(StringIOBytes_histogram, format='png',bbox_inches='tight')
                 StringIOBytes_histogram.seek(0)
                 hist_base_64_pngData = base64.b64encode(StringIOBytes_histogram.read())
 
@@ -1485,12 +1486,12 @@ class NNetwork:
                 ax5.hist(self.dataoutputs, bins=30, color='grey')
                 plt.subplots_adjust(left=0.18, hspace=0.60, top=0.99, bottom=0.075, right=0.98)
 
-                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png',bbox_inches='tight')
                 # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig3.pickle', 'wb'))
                 plt.close()
 
                 StringIOBytes_histogram = io.BytesIO()
-                plt.savefig(StringIOBytes_histogram, format='png')
+                plt.savefig(StringIOBytes_histogram, format='png',bbox_inches='tight')
                 StringIOBytes_histogram.seek(0)
                 hist_base_64_pngData = base64.b64encode(StringIOBytes_histogram.read())
 
@@ -1537,10 +1538,10 @@ class NNetwork:
                 ax2.set_title('PM Collection')
 
                 plt.subplots_adjust(wspace=0.25)
-                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png',bbox_inches='tight')
                 #pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig1.pickle', 'wb'))
                 StringIOBytes_preds = io.BytesIO()
-                plt.savefig(StringIOBytes_preds, format='png')
+                plt.savefig(StringIOBytes_preds, format='png',bbox_inches='tight')
                 StringIOBytes_preds.seek(0)
                 preds_base_64_pngData = base64.b64encode(StringIOBytes_preds.read())
                 plt.close()
@@ -1560,10 +1561,10 @@ class NNetwork:
                 plt.legend(bbox_to_anchor=(0.999, 0.999), shadow=False, fontsize='small', ncol=1, labelspacing=0.1,
                            columnspacing=0.2, handletextpad=0.1, loc='upper right')
                 plt.subplots_adjust(bottom=0.15, right=0.95)
-                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png',bbox_inches='tight')
                 # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig2.pickle', 'wb'))
                 StringIOBytes_risk = io.BytesIO()
-                plt.savefig(StringIOBytes_risk, format='png')
+                plt.savefig(StringIOBytes_risk, format='png',bbox_inches='tight')
                 StringIOBytes_risk.seek(0)
                 risk_base_64_pngData = base64.b64encode(StringIOBytes_risk.read())
                 plt.close()
@@ -1608,12 +1609,14 @@ class NNetwork:
                 ax2.set_title('PM Collection')
 
                 plt.subplots_adjust(wspace=0.25)
-                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png')
+                plt.tight_layout()
+                plt.savefig(os.path.splitext(filename)[0] + '_Predictions_Fig.png', format='png',bbox_inches='tight')
                 # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig1.pickle', 'wb'))
                 StringIOBytes_preds = io.BytesIO()
-                plt.savefig(StringIOBytes_preds, format='png')
+                plt.savefig(StringIOBytes_preds, format='png',bbox_inches='tight')
                 StringIOBytes_preds.seek(0)
                 preds_base_64_pngData = base64.b64encode(StringIOBytes_preds.read())
+                
                 plt.close()
 
                 risk_fig = plt.figure(figsize=(6.69, 3.35), dpi=300)
@@ -1628,10 +1631,10 @@ class NNetwork:
                 plt.legend(bbox_to_anchor=(0.999, 0.999), shadow=False, fontsize='small', ncol=1, labelspacing=0.1,
                            columnspacing=0.2, handletextpad=0.1, loc='upper right')
 
-                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png')
+                plt.savefig(os.path.splitext(filename)[0] + '_Risk_Fig.png', format='png',bbox_inches='tight')
                 # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig2.pickle', 'wb'))
                 StringIOBytes_risk = io.BytesIO()
-                plt.savefig(StringIOBytes_risk, format='png')
+                plt.savefig(StringIOBytes_risk, format='png',bbox_inches='tight')
                 StringIOBytes_risk.seek(0)
                 risk_base_64_pngData = base64.b64encode(StringIOBytes_risk.read())
                 plt.close()
@@ -1655,12 +1658,12 @@ class NNetwork:
             ax4.hist(self.dataoutputs, bins=30, color='grey')
             plt.subplots_adjust(left=0.18, hspace=0.60, top=0.99, bottom=0.075, right=0.98)
 
-            plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png')
+            plt.savefig(os.path.splitext(filename)[0] + '_Histograms_Fig.png', format='png',bbox_inches='tight')
             # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig3.pickle', 'wb'))
             plt.close()
 
             StringIOBytes_histogram = io.BytesIO()
-            plt.savefig(StringIOBytes_histogram, format='png')
+            plt.savefig(StringIOBytes_histogram, format='png',bbox_inches='tight')
             StringIOBytes_histogram.seek(0)
             hist_base_64_pngData = base64.b64encode(StringIOBytes_histogram.read())
         return hist_base_64_pngData,risk_base_64_pngData,preds_base_64_pngData
@@ -2104,21 +2107,21 @@ class NNetwork:
         avg_table_df['Input FRC (mg/L)'] = self.avg_case_results_am[FRC_IN]
         avg_table_df['Storage Duration for Target'] = storage_target
         if WATTEMP in self.datainputs.columns:
-            avg_table_df['Water Temperature(' + r'$\degree$' + 'C)'] = self.avg_case_results_am[WATTEMP]
+            avg_table_df['Water Temperature (Degrees C)'] = self.avg_case_results_am[WATTEMP]
         if COND in self.datainputs.columns:
-            avg_table_df['Electrical Conductivity (' + r'$\mu$' + 's/cm)'] = self.avg_case_results_am[COND]
+            avg_table_df['Electrical Conductivity (s*10^-6/cm)'] = self.avg_case_results_am[COND]
 
         if self.post_process_check==False:
-            avg_table_df['Median Predicted FRC level at Household (mg/L) - AM Collection'] = np.round(self.avg_case_results_am['median'],decimals=3)
-            avg_table_df['Median Predicted FRC level at Household (mg/L) - PM Collection'] = np.round(self.avg_case_results_pm[
+            avg_table_df['Median Predicted Household FRC Concentration (mg/L) - AM Collection'] = np.round(self.avg_case_results_am['median'],decimals=3)
+            avg_table_df['Median Predicted Household FRC Concentration (mg/L) - PM Collection'] = np.round(self.avg_case_results_pm[
                 'median'],decimals=3)
             avg_table_df['Predicted Risk of Household FRC below 0.20 mg/L - AM Collection'] = np.round(self.avg_case_results_am['probability<=0.20'],decimals=3)
             avg_table_df['Predicted Risk of Household FRC below 0.20 mg/L - PM Collection'] = np.round(self.avg_case_results_pm['probability<=0.20'],decimals=3)
             #avg_table_df['Predicted Risk of Household FRC below 0.30 mg/L'] = self.avg_case_results['probability<=0.30']
         else:
-            avg_table_df['Median Predicted FRC level at Household (mg/L) - AM Collection'] = np.round(self.avg_case_results_am_post[
+            avg_table_df['Median Predicted Household FRC Concentration (mg/L) - AM Collection'] = np.round(self.avg_case_results_am_post[
                 'median'],decimals=3)
-            avg_table_df['Median Predicted FRC level at Household (mg/L) - PM Collection'] = np.round(self.avg_case_results_pm_post[
+            avg_table_df['Median Predicted Household FRC Concentration (mg/L) - PM Collection'] = np.round(self.avg_case_results_pm_post[
                 'median'],decimals=3)
             avg_table_df['Predicted Risk of Household FRC below 0.20 mg/L - AM Collection'] = np.round(self.avg_case_results_am_post[
                 'probability<=0.20'],decimals=3)
