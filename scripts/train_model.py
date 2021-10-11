@@ -1,5 +1,5 @@
 import sys
-from NNetwork import NNetwork
+from swotann.nnetwork import NNetwork
 
 SWOT_net = NNetwork()
 filename = sys.argv[1]

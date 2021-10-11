@@ -9,20 +9,16 @@ from datetime import timedelta
 from xlrd.xldate import xldate_as_datetime
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 plt.rcParams.update({"figure.autolayout": True})
 import pandas as pd
 import matplotlib.gridspec as gridspec
-import matplotlib as mpl
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import scipy.stats
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
-
-from mpl_toolkits.mplot3d import Axes3D
 
 """
 TF_CPP_MIN_LOG_LEVEL:
@@ -32,8 +28,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from tensorflow import keras
 
 
-class NNetwork:
-    def __init__(self):
+class NNetwork(object):
+    def __init__(self, network_count=200, epochs=1000):
 
         self.xl_dateformat = r"%Y-%m-%dT%H:%M"
         self.model = None
@@ -54,8 +50,8 @@ class NNetwork:
         self.ruleset = []
 
         self.layer1_neurons = 12
-        self.network_count = 200
-        self.epochs = 1000
+        self.network_count = network_count
+        self.epochs = epochs
 
         self.predictors = None
 
@@ -246,10 +242,10 @@ class NNetwork:
         t = self.targets
 
         if not os.path.exists(directory):
-            os.mkdir(directory)
+            os.makedirs(directory)
 
         if not os.path.exists(directory + os.sep + "network_weights"):
-            os.mkdir(directory + os.sep + "network_weights")
+            os.makedirs(directory + os.sep + "network_weights")
 
         model_json = self.model.to_json()
         with open(directory + os.sep + "architecture.json", "w") as json_file:
@@ -317,7 +313,7 @@ class NNetwork:
         self.model.fit(
             x_norm_train,
             t_norm_train,
-            epochs=1000,
+            epochs=self.epochs,
             validation_data=(x_norm_val, t_norm_val),
             callbacks=[early_stopping_monitor],
             verbose=0,
@@ -925,7 +921,7 @@ class NNetwork:
             self.model.fit(
                 x_norm_train,
                 t_norm_train,
-                epochs=1000,
+                epochs=self.epochs,
                 validation_data=(x_norm_val, t_norm_val),
                 callbacks=[early_stopping_monitor],
                 verbose=0,
@@ -1170,7 +1166,7 @@ class NNetwork:
             print(network + "loaded")
 
         # Load the scalers used for normalizing the data before training
-        # the NN (see train_SWOT_network()).
+        # the NN (see train_swot_network()).
         scalers = joblib.load(directory + os.sep + "scaler.save")
         self.predictors_scaler = scalers["input"]
         self.targets_scaler = scalers["output"]
@@ -3532,3 +3528,48 @@ class NNetwork:
         self.ruleset.append(rule)
         if sum(matches):
             self.file.drop(self.file.loc[matches].index, inplace=True)
+
+    def run_swot(self, input_file, results_file, report_file, storage_target):
+        now = datetime.datetime.now()
+        directory = (
+            "model_retraining"
+            + os.sep
+            + now.strftime("%m%d%Y_%H%M%S")
+            + "_"
+            + os.path.basename(input_file)
+        )
+
+        # Uncommentfor Excel processing
+        # file = pd.read_excel(input_file)
+
+        file = pd.read_csv(input_file)
+
+        # Support from 3 different input templates se1_frc, ts_frc, and ts frc1
+        if "se1_frc" in file.columns:
+            FRC_IN = "se1_frc"
+            WATTEMP = "se1_wattemp"
+            COND = "se1_cond"
+            FRC_OUT = "se4_frc"
+        elif "ts_frc1" in file.columns:
+            FRC_IN = "ts_frc1"
+            WATTEMP = "ts_wattemp"
+            COND = "ts_cond"
+            FRC_OUT = "hh_frc1"
+        elif "ts_frc" in file.columns:
+            FRC_IN = "ts_frc"
+            WATTEMP = "ts_wattemp"
+            COND = "ts_cond"
+            FRC_OUT = "hh_frc"
+
+        self.import_data_from_csv(input_file)
+        self.set_up_model()
+        self.train_SWOT_network(directory)
+        self.calibration_performance_evaluation(report_file)
+        self.post_process_cal()
+        # self.full_performance_evaluation(directory)
+        self.set_inputs_for_table(storage_target)
+        self.import_pretrained_model(directory)
+        self.predict()
+        self.display_results()
+        self.export_results_to_csv(results_file)
+        self.generate_html_report(report_file, storage_target)
