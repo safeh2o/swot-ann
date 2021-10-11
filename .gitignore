@@ -1,6 +1,11 @@
 /env/
 /winenv/
+.pytest_cache/
 __pycache__/
 tests/out/
 .vscode/
 model_retraining/*/
+build/
+dist/
+*.egg-info/
+**/*.pyc
