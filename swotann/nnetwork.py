@@ -3174,19 +3174,18 @@ class NNetwork(object):
             with tag("div", id="Predictions Graphs"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(
+                    src=os.path.basename(
                         os.path.splitext(filename)[0] + "_Predictions_Fig.png"
                     ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(
-                    os.path.splitext(filename)[0] + "_Predictions_Fig.png"
-                )
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(
+            #         os.path.splitext(filename)[0] + "_Predictions_Fig.png"
+            #     )
+            #     + '" type="image/jpeg"></object>'
+            # )
             with tag("p", klass="Risk Fig Text"):
                 text(
                     "Figure and tables showing predicted risk of household FRC below 0.2 mg/L for average and worst case scenarios for both AM and PM collection. Risk obtained from forecast pdf (above) and taken as cumulative probability of houeshold FRC below 0.2 mg/L. Note that 0% predicted risk of household FRC below 0.2 mg/L does not mean that there is no possibility of household FRC being below 0.2 mg/L, simply that the predicted risk is too low to be measured. The average case target may, in some, cases be more conservative than the worst case targets as the worst case target is derived on the assumption that higher conductivity and water temperature will lead to greater decay (as confirmed by FRC decay chemisty and results at past sites). However, this may not be true in all cases, so the most conservative target is always recommended."
@@ -3194,15 +3193,16 @@ class NNetwork(object):
             with tag("div", id="Risk Graphs"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png"),
+                    src=os.path.basename(
+                        os.path.splitext(filename)[0] + "_Risk_Fig.png"
+                    ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png")
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png")
+            #     + '" type="image/jpeg"></object>'
+            # )
             with tag("h2", klass="Header"):
                 text("Average Case Targets Table")
             with tag("table", id="average case table"):
@@ -3218,19 +3218,18 @@ class NNetwork(object):
             with tag("div", id="Histograms"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(
+                    src=os.path.basename(
                         os.path.splitext(filename)[0] + "_Histograms_Fig.png"
                     ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(
-                    os.path.splitext(filename)[0] + "_Histograms_Fig.png"
-                )
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(
+            #         os.path.splitext(filename)[0] + "_Histograms_Fig.png"
+            #     )
+            #     + '" type="image/jpeg"></object>'
+            # )
         else:
             with tag("p", klass="Predictions Fig Text"):
                 text(
@@ -3241,19 +3240,18 @@ class NNetwork(object):
             with tag("div", id="Predictions Graphs"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(
+                    src=os.path.basename(
                         os.path.splitext(filename)[0] + "_Predictions_Fig.png"
                     ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(
-                    os.path.splitext(filename)[0] + "_Predictions_Fig.png"
-                )
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(
+            #         os.path.splitext(filename)[0] + "_Predictions_Fig.png"
+            #     )
+            #     + '" type="image/jpeg"></object>'
+            # )
             with tag("p", klass="Risk Fig Text"):
                 text(
                     "Figure and tables showing predicted risk of household FRC below 0.2 mg/L for both AM and PM collection. Risk obtained from forecast probability density function (above) and taken as cumulative probability of houeshold FRC below 0.2 mg/L. Note that 0% predicted risk of household FRC below 0.2 mg/L does not mean that there is no possibility of household FRC being below 0.2 mg/L, simply that the predicted risk is too low to be measured."
@@ -3261,15 +3259,16 @@ class NNetwork(object):
             with tag("div", id="Risk Graphs"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png"),
+                    src=os.path.basename(
+                        os.path.splitext(filename)[0] + "_Risk_Fig.png"
+                    ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png")
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(os.path.splitext(filename)[0] + "_Risk_Fig.png")
+            #     + '" type="image/jpeg"></object>'
+            # )
             with tag("h2", klass="Header"):
                 text("Targets Table")
             with tag("table", id="average case table"):
@@ -3281,19 +3280,18 @@ class NNetwork(object):
             with tag("div", id="Histograms"):
                 doc.stag(
                     "img",
-                    src="cid:"
-                    + os.path.basename(
+                    src=os.path.basename(
                         os.path.splitext(filename)[0] + "_Histograms_Fig.png"
                     ),
                 )
                 # doc.asis('<object data="cid:'+os.path.basename(os.path.splitext(filename)[0]+'.PNG') + '" type="image/jpeg"></object>')
-            doc.asis(
-                '<object data="'
-                + os.path.basename(
-                    os.path.splitext(filename)[0] + "_Histograms_Fig.png"
-                )
-                + '" type="image/jpeg"></object>'
-            )
+            # doc.asis(
+            #     '<object data="'
+            #     + os.path.basename(
+            #         os.path.splitext(filename)[0] + "_Histograms_Fig.png"
+            #     )
+            #     + '" type="image/jpeg"></object>'
+            # )
 
         with tag("h2", klass="Header"):
             text("Model Diagnostic Figures")
@@ -3318,18 +3316,17 @@ class NNetwork(object):
         with tag("div", id="diagnostic_graphs"):
             doc.stag(
                 "img",
-                src="cid:"
-                + os.path.basename(
+                src=os.path.basename(
                     os.path.splitext(filename)[0] + "_Calibration_Diagnostic_Figs.png"
                 ),
             )
-        doc.asis(
-            '<object data="'
-            + os.path.basename(
-                os.path.splitext(filename)[0] + "_Calibration_Diagnostic_Figs.png"
-            )
-            + '" type="image/jpeg"></object>'
-        )
+        # doc.asis(
+        #     '<object data="'
+        #     + os.path.basename(
+        #         os.path.splitext(filename)[0] + "_Calibration_Diagnostic_Figs.png"
+        #     )
+        #     + '" type="image/jpeg"></object>'
+        # )
 
         doc.asis(skipped_rows_table)
 
