@@ -1,4 +1,4 @@
-envname = env
+envname = winenv
 
 venv:
 	python3 -m venv $(envname)
