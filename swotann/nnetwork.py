@@ -531,7 +531,7 @@ class NNetwork(object):
         p_i = np.arange(0 / c, (c + 1) / c, 1 / c)
 
         self.CRPS_cal = np.sum(
-            g_bar * ((1 - o_bar) * (p_i ** 2) + o_bar * ((1 - p_i) ** 2))
+            g_bar * ((1 - o_bar) * (p_i**2) + o_bar * ((1 - p_i) ** 2))
         )
 
         CI_x = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
@@ -910,7 +910,7 @@ class NNetwork(object):
                 t_cal_norm,
                 train_size=1 / 3,
                 shuffle=True,
-                random_state=i ** 2,
+                random_state=i**2,
             )
 
             new_weights = [
@@ -2918,7 +2918,7 @@ class NNetwork(object):
         ax = fig.add_subplot(221)
         img = ax.scatter(frc, watt, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
         ax.set_xlabel("FRC at tapstand (mg/L)")
-        ax.set_ylabel("Water Temperature (" + u"\u00b0" + "C)")
+        ax.set_ylabel("Water Temperature (" + "\u00b0" + "C)")
         ax.grid(linewidth=0.2)
 
         ax = fig.add_subplot(222)
@@ -2929,7 +2929,7 @@ class NNetwork(object):
 
         ax = fig.add_subplot(223)
         img = ax.scatter(watt, cond, c=c, s=5, cmap=cmap, norm=norm, alpha=1)
-        ax.set_xlabel("Water Temperature (" + u"\u00b0" + "C)")
+        ax.set_xlabel("Water Temperature (" + "\u00b0" + "C)")
         ax.set_ylabel("Water Conductivity (\u03BCS/cm)")
         ax.grid(linewidth=0.2)
 
@@ -3014,7 +3014,7 @@ class NNetwork(object):
 
         ax = fig.add_subplot(222)
         ax.hist(watt, bins=20, edgecolor="black", linewidth=0.1)
-        ax.set_xlabel("Water Temperature (" + u"\u00b0" + "C)")
+        ax.set_xlabel("Water Temperature (" + "\u00b0" + "C)")
         ax.set_ylabel("# of instances")
         mean = round(np.mean(watt), 2)
         median = np.median(watt)
@@ -3023,8 +3023,8 @@ class NNetwork(object):
         ax.legend(
             (mean_line, median_line),
             (
-                "Mean: " + str(mean) + u"\u00b0" + "C",
-                "Median: " + str(median) + u"\u00b0" + "C",
+                "Mean: " + str(mean) + "\u00b0" + "C",
+                "Median: " + str(median) + "\u00b0" + "C",
             ),
         )
 
@@ -3346,6 +3346,11 @@ class NNetwork(object):
 
         return doc.getvalue()
 
+    def generate_metadata(self):
+        metadata = {}
+        metadata["average_time"] = self.avg_time_elapsed  # in seconds
+        return metadata
+
     def prepare_table_for_html_report(self, storage_target):
         """Formats the results into an html table for display."""
 
@@ -3570,3 +3575,5 @@ class NNetwork(object):
         self.display_results()
         self.export_results_to_csv(results_file)
         self.generate_html_report(report_file, storage_target)
+        metadata = self.generate_metadata()
+        return metadata
