@@ -35,7 +35,7 @@ class NNetwork(object):
         self.model = None
         self.pretrained_networks = []
 
-        self.software_version = "2.0"
+        self.software_version = "2.0.1"
         self.input_filename = None
         self.today = str(datetime.date.today())
         self.avg_time_elapsed = 0
@@ -235,45 +235,23 @@ class NNetwork(object):
         Trains an ensemble of 200 neural networks on se1_frc, water temperature,
         water conductivity."""
 
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
         self.predictors_scaler = self.predictors_scaler.fit(self.predictors)
         self.targets_scaler = self.targets_scaler.fit(self.targets)
 
         x = self.predictors
         t = self.targets
 
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        if not os.path.exists(directory + os.sep + "network_weights"):
-            os.makedirs(directory + os.sep + "network_weights")
-
-        model_json = self.model.to_json()
-        with open(directory + os.sep + "architecture.json", "w") as json_file:
-            json_file.write(model_json)
-        json_file.close()
-
-        base_model = self.model
-        base_model.save(directory + "\\base_network.h5")
-
         self.calibration_predictions = []
+        self.trained_models = {}
 
         for i in range(self.network_count):
-            print("Training Network " + str(i))
-            self.train_network(x, t, directory)
-            self.model.save_weights(
-                directory
-                + os.sep
-                + "network_weights"
-                + os.sep
-                + "network"
-                + str(i)
-                + ".h5"
-            )
+            print('Training Network ' + str(i))
+            model_out = self.train_network(x, t, directory)
 
-        scaler_filename = "scaler.save"
-        scalers = {"input": self.predictors_scaler, "output": self.targets_scaler}
-        joblib.dump(scalers, directory + os.sep + scaler_filename)
-        print("Model Saved!")
+            self.trained_models.update({'model_' + str(i): model_out})
 
     def train_network(self, x, t, directory):
         """
@@ -293,36 +271,25 @@ class NNetwork(object):
         Performance metrics are calculated and stored for evaluating the network performance.
         """
         tf.keras.backend.clear_session()
-        early_stopping_monitor = keras.callbacks.EarlyStopping(
-            monitor="val_loss", min_delta=0, patience=10, restore_best_weights=True
-        )
+        early_stopping_monitor = keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10,
+                                                               restore_best_weights=True)
 
         x_norm = self.predictors_scaler.transform(x)
         t_norm = self.targets_scaler.transform(t)
 
-        self.model = keras.models.load_model(directory + "\\base_network.h5")
+        trained_model = keras.models.clone_model(self.model)
 
-        x_norm_train, x_norm_val, t_norm_train, t_norm_val = train_test_split(
-            x_norm, t_norm, train_size=0.333, shuffle=True
-        )
+        x_norm_train, x_norm_val, t_norm_train, t_norm_val = train_test_split(x_norm, t_norm, train_size=0.333,
+                                                                              shuffle=True)
 
-        new_weights = [
-            np.random.uniform(-0.05, 0.05, w.shape) for w in self.model.get_weights()
-        ]
-        self.model.set_weights(new_weights)
-        self.model.fit(
-            x_norm_train,
-            t_norm_train,
-            epochs=self.epochs,
-            validation_data=(x_norm_val, t_norm_val),
-            callbacks=[early_stopping_monitor],
-            verbose=0,
-            batch_size=len(t_norm_train),
-        )
+        new_weights = [np.random.uniform(-0.05, 0.05, w.shape) for w in trained_model.get_weights()]
+        trained_model.set_weights(new_weights)
+        trained_model.compile(loss='mse', optimizer=self.optimizer)
+        trained_model.fit(x_norm_train, t_norm_train, epochs=self.epochs, validation_data=(x_norm_val, t_norm_val),
+                          callbacks=[early_stopping_monitor], verbose=0, batch_size=len(t_norm_train))
 
-        self.calibration_predictions.append(
-            self.targets_scaler.inverse_transform(self.model.predict(x_norm))
-        )
+        self.calibration_predictions.append(self.targets_scaler.inverse_transform(trained_model.predict(x_norm)))
+        return trained_model
 
     def calibration_performance_evaluation(self, filename):
         Y_true = np.array(self.targets)
@@ -928,9 +895,7 @@ class NNetwork(object):
                 batch_size=len(t_norm_train),
             )
 
-            self.verifying_predictions.append(
-                self.targets_scaler.inverse_transform(self.model.predict(x_test_norm))
-            )
+            self.verifying_predictions.append(self.targets_scaler.inverse_transform(self.model.predict(x_test_norm)))
 
         Y_true = np.array(self.verifying_observations)
         Y_pred = np.array(self.verifying_predictions)
@@ -1118,7 +1083,7 @@ class NNetwork(object):
         plt.ylabel("Point-of-Consumption FRC (mg/L)")
 
         plt.subplot2grid((2, 3), (0, 2), colspan=1, rowspan=1)
-        plt.plot(CI_x, CI_x, c="k")
+        plt.plot(CI_x, CI_x, c='k')
         plt.scatter(CI_x, capture)
         plt.scatter(CI_x, capture_20)
         plt.xlabel("Ensemble Confidence Interval")
@@ -1128,48 +1093,16 @@ class NNetwork(object):
 
         plt.subplot2grid((2, 3), (1, 2), colspan=1, rowspan=1)
         plt.hist(rank, bins=(self.network_count + 1), density=True)
-        plt.xlabel("Rank")
-        plt.ylabel("Probability")
-        plt.savefig(directory + "\\Verification_Diagnostic_Figs.png", format="png")
+        plt.xlabel('Rank')
+        plt.ylabel('Probability')
+        plt.savefig(directory + "\\Verification_Diagnostic_Figs.png", format='png')
         plt.close()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format="png")
+        plt.savefig(myStringIOBytes, format='png')
         myStringIOBytes.seek(0)
         my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_pngData
-
-    def import_pretrained_model(self, directory):
-        """Loads a pretrained SWOT neural Network.
-
-        Loads a neural network that has previously been trained and saved by
-        the SWOT NN. The saved networks are stored as directories.
-
-        Args:
-            directory: The name of the directory where the pretrained network exists.
-                The directory name can be specified as a relative or an absolute path.
-        """
-
-        # Look in the pretrained-net directory for the JSON file that contains
-        # the NN architecture and load it.
-        json_architecture = open(directory + os.sep + "architecture.json", "r")
-        network_architecture = json_architecture.read()
-        json_architecture.close()
-
-        # Load all the pretrained networks and store them in an array
-        # called self.pretrained_networks (see __init__).
-        pretrained_networks = os.listdir(directory + os.sep + "network_weights")
-        for network in pretrained_networks:
-            temp = keras.models.model_from_json(network_architecture)
-            temp.load_weights(directory + os.sep + "network_weights" + os.sep + network)
-            self.pretrained_networks.append(temp)
-            print(network + "loaded")
-
-        # Load the scalers used for normalizing the data before training
-        # the NN (see train_swot_network()).
-        scalers = joblib.load(directory + os.sep + "scaler.save")
-        self.predictors_scaler = scalers["input"]
-        self.targets_scaler = scalers["output"]
 
     def set_inputs_for_table(self, storage_target):
 
@@ -1179,23 +1112,23 @@ class NNetwork(object):
         pm_collect = [1 for i in range(0, len(frc))]
         temp_med_am = {
             "ts_frc": frc,
-            "elapsed_time": lag_time,
-            "time of collection": am_collect,
+            "elapsed time": lag_time,
+            "time of collection (0=AM, 1=PM)": am_collect,
         }
         temp_med_pm = {
             "ts_frc": frc,
-            "elapsed_time": lag_time,
-            "time of collection": pm_collect,
+            "elapsed time": lag_time,
+            "time of collection (0=AM, 1=PM)": pm_collect,
         }
         temp_95_am = {
             "ts_frc": frc,
-            "elapsed_time": lag_time,
-            "time of collection": am_collect,
+            "elapsed time": lag_time,
+            "time of collection (0=AM, 1=PM)": am_collect,
         }
         temp_95_pm = {
             "ts_frc": frc,
-            "elapsed_time": lag_time,
-            "time of collection": pm_collect,
+            "elapsed time": lag_time,
+            "time of collection (0=AM, 1=PM)": pm_collect,
         }
 
         if WATTEMP in self.datainputs.columns:
@@ -1230,63 +1163,42 @@ class NNetwork(object):
         CI_95_Upper = []
         CI_95_Lower = []
         Median_Results = []
+        risk_00_kernel_frc = []
         risk_20_kernel_frc = []
         risk_25_kernel_frc = []
         risk_30_kernel_frc = []
 
         for a in range(0, len(test1_frc)):
-            scipy_kde = scipy.stats.gaussian_kde(
-                results_table_frc[a, :], bw_method=bandwidth
-            )
-            risk_20_kernel_frc = np.append(
-                risk_20_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.2)
-            )
-            risk_25_kernel_frc = np.append(
-                risk_25_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.25)
-            )
-            risk_30_kernel_frc = np.append(
-                risk_30_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.3)
-            )
+            scipy_kde = scipy.stats.gaussian_kde(results_table_frc[a, :], bw_method=bandwidth)
+            risk_00_kernel_frc = np.append(risk_00_kernel_frc, scipy_kde.integrate_box_1d(-10, 0))
+            risk_20_kernel_frc = np.append(risk_20_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.2))
+            risk_25_kernel_frc = np.append(risk_25_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.25))
+            risk_30_kernel_frc = np.append(risk_30_kernel_frc, scipy_kde.integrate_box_1d(-10, 0.3))
             scipy_pdf = scipy_kde.evaluate(evaluation_range) * 0.001
             scipy_cdf = np.cumsum(scipy_pdf)
 
-            Min_CI = np.append(
-                Min_CI, evaluation_range[np.max(np.where(scipy_cdf == 0)[0])]
-            )
+            Min_CI = np.append(Min_CI, evaluation_range[np.max(np.where(scipy_cdf == 0)[0])])
             Max_CI = np.append(Max_CI, evaluation_range[np.argmax(scipy_cdf)])
-            CI_99_Upper = np.append(
-                CI_99_Upper, evaluation_range[np.argmin(np.abs((scipy_cdf - 0.995)))]
-            )
-            CI_99_Lower = np.append(
-                CI_99_Lower, evaluation_range[np.argmin(np.abs((scipy_cdf - 0.005)))]
-            )
-            CI_95_Upper = np.append(
-                CI_95_Upper, evaluation_range[np.argmin(np.abs((scipy_cdf - 0.975)))]
-            )
-            CI_95_Lower = np.append(
-                CI_95_Lower, evaluation_range[np.argmin(np.abs((scipy_cdf - 0.025)))]
-            )
-            Median_Results = np.append(
-                Median_Results, evaluation_range[np.argmin(np.abs((scipy_cdf - 0.5)))]
-            )
-        temp_key = {
-            "median": Median_Results,
-            "Ensemble Minimum": Min_CI,
-            "Ensemble Maximum": Max_CI,
-            "Lower 99 CI": CI_99_Lower,
-            "Upper 99 CI": CI_99_Upper,
-            "Lower 95 CI": CI_95_Lower,
-            "Upper 95 CI": CI_95_Upper,
-            "probability<=0.20": risk_20_kernel_frc,
-            "probability<=0.25": risk_25_kernel_frc,
-            "probability<=0.30": risk_30_kernel_frc,
-        }
+            CI_99_Upper = np.append(CI_99_Upper,
+                                    evaluation_range[np.argmin(np.abs((scipy_cdf - 0.995)))])
+            CI_99_Lower = np.append(CI_99_Lower,
+                                    evaluation_range[np.argmin(np.abs((scipy_cdf - 0.005)))])
+            CI_95_Upper = np.append(CI_95_Upper,
+                                    evaluation_range[np.argmin(np.abs((scipy_cdf - 0.975)))])
+            CI_95_Lower = np.append(CI_95_Lower,
+                                    evaluation_range[np.argmin(np.abs((scipy_cdf - 0.025)))])
+            Median_Results = np.append(Median_Results,
+                                       evaluation_range[np.argmin(np.abs((scipy_cdf - 0.5)))])
+        temp_key = {"Tapstand FRC":np.arange(0.20,2.05,0.05),"median": Median_Results, "Ensemble Minimum": Min_CI, "Ensemble Maximum": Max_CI,
+                    "Lower 99 CI": CI_99_Lower, "Upper 99 CI": CI_99_Upper, "Lower 95 CI": CI_95_Lower,
+                    "Upper 95 CI": CI_95_Upper, 'probability==0': risk_00_kernel_frc,
+                    "probability<=0.20": risk_20_kernel_frc, "probability<=0.25": risk_25_kernel_frc,
+                    "probability<=0.30": risk_30_kernel_frc}
         post_processed_df = pd.DataFrame(temp_key)
         return post_processed_df
 
     def predict(self):
         """
-
         To make the predictions, a pretrained model must be loaded using the import_pretrained_model() method.
         The SWOT ANN uses an ensemble of 200 ANNs. All of the 200 ANNs make a prediction on the inputs and the results are
         stored. The median of all the 200 predictions is calculated and stored here.
@@ -1312,89 +1224,55 @@ class NNetwork(object):
         input_scaler = self.predictors_scaler
         avg_case_inputs_norm_am = input_scaler.transform(self.avg_case_predictors_am)
         avg_case_inputs_norm_pm = input_scaler.transform(self.avg_case_predictors_pm)
-        worst_case_inputs_norm_am = input_scaler.transform(
-            self.worst_case_predictors_am
-        )
-        worst_case_inputs_norm_pm = input_scaler.transform(
-            self.worst_case_predictors_pm
-        )
+        worst_case_inputs_norm_am = input_scaler.transform(self.worst_case_predictors_am)
+        worst_case_inputs_norm_pm = input_scaler.transform(self.worst_case_predictors_pm)
 
         ##AVERAGE CASE TARGET w AM COLLECTION
 
         # Iterate through all loaded pretrained networks, make predictions based on the inputs,
         # calculate the median of the predictions and store everything to self.results
-        for j, network in enumerate(self.pretrained_networks):
+        for j in range(0, self.network_count):
             key = "se4_frc_net-" + str(j)
             predictions = self.targets_scaler.inverse_transform(
-                network.predict(avg_case_inputs_norm_am)
-            ).tolist()
+                self.trained_models["model_" + str(j)].predict(avg_case_inputs_norm_am)).tolist()
             temp = sum(predictions, [])
             avg_case_results_am.update({key: temp})
         self.avg_case_results_am = pd.DataFrame(avg_case_results_am)
         self.avg_case_results_am["median"] = self.avg_case_results_am.median(axis=1)
 
         for i in self.avg_case_predictors_am.keys():
-            self.avg_case_results_am.update(
-                {i: self.avg_case_predictors_am[i].tolist()}
-            )
+            self.avg_case_results_am.update({i: self.avg_case_predictors_am[i].tolist()})
             self.avg_case_results_am[i] = self.avg_case_predictors_am[i].tolist()
 
         # Include the inputs/predictors in the self.results variable
         for i in self.avg_case_predictors_am.keys():
-            self.avg_case_results_am.update(
-                {i: self.avg_case_predictors_am[i].tolist()}
-            )
+            self.avg_case_results_am.update({i: self.avg_case_predictors_am[i].tolist()})
             self.avg_case_results_am[i] = self.avg_case_predictors_am[i].tolist()
 
         if self.post_process_check == False:
             # Calculate all the probability fields and store them to self.results
             # results_table_frc_avg = self.results.iloc[:, 0:(self.network_count - 1)]
-            self.avg_case_results_am["probability<=0.20"] = (
-                np.sum(
-                    np.less(
-                        self.avg_case_results_am.iloc[:, 0 : (self.network_count - 1)],
-                        0.2,
-                    ),
-                    axis=1,
-                )
-                / self.network_count
-            )
-            self.avg_case_results_am["probability<=0.25"] = (
-                np.sum(
-                    np.less(
-                        self.avg_case_results_am.iloc[:, 0 : (self.network_count - 1)],
-                        0.25,
-                    ),
-                    axis=1,
-                )
-                / self.network_count
-            )
-            self.avg_case_results_am["probability<=0.30"] = (
-                np.sum(
-                    np.less(
-                        self.avg_case_results_am.iloc[:, 0 : (self.network_count - 1)],
-                        0.3,
-                    ),
-                    axis=1,
-                )
-                / self.network_count
-            )
+            self.avg_case_results_am["probability<=0.20"] = np.sum(
+                np.less_equal(self.avg_case_results_am.iloc[:, 0:(self.network_count - 1)], 0.2),
+                axis=1) / self.network_count
+            self.avg_case_results_am["probability<=0.25"] = np.sum(
+                np.less_equal(self.avg_case_results_am.iloc[:, 0:(self.network_count - 1)], 0.25),
+                axis=1) / self.network_count
+            self.avg_case_results_am["probability<=0.30"] = np.sum(
+                np.less_equal(self.avg_case_results_am.iloc[:, 0:(self.network_count - 1)], 0.3),
+                axis=1) / self.network_count
         else:
             self.avg_case_results_am_post = self.post_process_predictions(
-                self.avg_case_results_am.iloc[
-                    :, 0 : (self.network_count - 1)
-                ].to_numpy()
-            )
+                self.avg_case_results_am.iloc[:, 0:(self.network_count - 1)].to_numpy())
 
         ##AVERAGE CASE TARGET w PM COLLECTION
 
         # Iterate through all loaded pretrained networks, make predictions based on the inputs,
         # calculate the median of the predictions and store everything to self.results
-        for j, network in enumerate(self.pretrained_networks):
+        for j in range(0, self.network_count):
             key = "se4_frc_net-" + str(j)
             predictions = self.targets_scaler.inverse_transform(
-                network.predict(avg_case_inputs_norm_pm)
-            ).tolist()
+                self.trained_models["model_" + str(j)].predict(avg_case_inputs_norm_pm)).tolist()
             temp = sum(predictions, [])
             avg_case_results_pm.update({key: temp})
         self.avg_case_results_pm = pd.DataFrame(avg_case_results_pm)
@@ -1402,9 +1280,7 @@ class NNetwork(object):
 
         # Include the inputs/predictors in the self.results variable
         for i in self.avg_case_predictors_pm.keys():
-            self.avg_case_results_pm.update(
-                {i: self.avg_case_predictors_pm[i].tolist()}
-            )
+            self.avg_case_results_pm.update({i: self.avg_case_predictors_pm[i].tolist()})
             self.avg_case_results_pm[i] = self.avg_case_predictors_pm[i].tolist()
 
         if self.post_process_check == False:
@@ -1443,34 +1319,24 @@ class NNetwork(object):
 
         else:
             self.avg_case_results_pm_post = self.post_process_predictions(
-                self.avg_case_results_pm.iloc[
-                    :, 0 : (self.network_count - 1)
-                ].to_numpy()
-            )
+                self.avg_case_results_pm.iloc[:, 0:(self.network_count - 1)].to_numpy())
 
         if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
             ##WORST CASE TARGET w AM COLLECTION
 
-            for j, network in enumerate(self.pretrained_networks):
+            for j in range(0, self.network_count):
                 key = "se4_frc_net-" + str(j)
                 predictions = self.targets_scaler.inverse_transform(
-                    network.predict(worst_case_inputs_norm_am)
-                ).tolist()
+                    self.trained_models["model_" + str(j)].predict(worst_case_inputs_norm_am)).tolist()
                 temp = sum(predictions, [])
                 worst_case_results_am.update({key: temp})
             self.worst_case_results_am = pd.DataFrame(worst_case_results_am)
-            self.worst_case_results_am["median"] = self.worst_case_results_am.median(
-                axis=1
-            )
+            self.worst_case_results_am["median"] = self.worst_case_results_am.median(axis=1)
 
             # Include the inputs/predictors in the self.results variable
             for i in self.worst_case_predictors_am.keys():
-                self.worst_case_results_am.update(
-                    {i: self.worst_case_predictors_am[i].tolist()}
-                )
-                self.worst_case_results_am[i] = self.worst_case_predictors_am[
-                    i
-                ].tolist()
+                self.worst_case_results_am.update({i: self.worst_case_predictors_am[i].tolist()})
+                self.worst_case_results_am[i] = self.worst_case_predictors_am[i].tolist()
 
             if self.post_process_check == False:
                 # Calculate all the probability fields and store them to self.results
@@ -1513,33 +1379,23 @@ class NNetwork(object):
                 )
             else:
                 self.worst_case_results_am_post = self.post_process_predictions(
-                    self.worst_case_results_am.iloc[
-                        :, 0 : (self.network_count - 1)
-                    ].to_numpy()
-                )
+                    self.worst_case_results_am.iloc[:, 0:(self.network_count - 1)].to_numpy())
 
             ##WORST CASE TARGET w PM COLLECTION
 
-            for j, network in enumerate(self.pretrained_networks):
+            for j in range(0, self.network_count):
                 key = "se4_frc_net-" + str(j)
                 predictions = self.targets_scaler.inverse_transform(
-                    network.predict(worst_case_inputs_norm_pm)
-                ).tolist()
+                    self.trained_models["model_" + str(j)].predict(worst_case_inputs_norm_pm)).tolist()
                 temp = sum(predictions, [])
                 worst_case_results_pm.update({key: temp})
             self.worst_case_results_pm = pd.DataFrame(worst_case_results_pm)
-            self.worst_case_results_pm["median"] = self.worst_case_results_pm.median(
-                axis=1
-            )
+            self.worst_case_results_pm["median"] = self.worst_case_results_pm.median(axis=1)
 
             # Include the inputs/predictors in the self.results variable
             for i in self.worst_case_predictors_pm.keys():
-                self.worst_case_results_pm.update(
-                    {i: self.worst_case_predictors_pm[i].tolist()}
-                )
-                self.worst_case_results_pm[i] = self.worst_case_predictors_pm[
-                    i
-                ].tolist()
+                self.worst_case_results_pm.update({i: self.worst_case_predictors_pm[i].tolist()})
+                self.worst_case_results_pm[i] = self.worst_case_predictors_pm[i].tolist()
 
             if self.post_process_check == False:
                 # Calculate all the probability fields and store them to self.results
@@ -1582,10 +1438,7 @@ class NNetwork(object):
                 )
             else:
                 self.worst_case_results_pm_post = self.post_process_predictions(
-                    self.worst_case_results_pm.iloc[
-                        :, 0 : (self.network_count - 1)
-                    ].to_numpy()
-                )
+                    self.worst_case_results_pm.iloc[:, 0:(self.network_count - 1)].to_numpy())
 
     def results_visualization(self, filename, storage_target):
         test1_frc = np.arange(0.2, 2.05, 0.05)
@@ -2357,6 +2210,7 @@ class NNetwork(object):
                 StringIOBytes_histogram.seek(0)
                 hist_base_64_pngData = base64.b64encode(StringIOBytes_histogram.read())
 
+
         else:
             if self.post_process_check == False:
                 results_table_frc_avg_am = self.avg_case_results_am.iloc[
@@ -2731,23 +2585,13 @@ class NNetwork(object):
                 print(self.worst_case_results_am)
                 print(self.avg_case_results_pm)
                 print(self.worst_case_results_pm)
-                return (
-                    self.avg_case_results_am,
-                    self.avg_case_results_pm,
-                    self.worst_case_results_am,
-                    self.worst_case_results_pm,
-                )
+                return self.avg_case_results_am, self.avg_case_results_pm, self.worst_case_results_am, self.worst_case_results_pm
             else:
                 print(self.avg_case_results_am_post)
                 print(self.worst_case_results_am_post)
                 print(self.avg_case_results_pm_post)
                 print(self.worst_case_results_pm_post)
-                return (
-                    self.avg_case_results_am_post,
-                    self.avg_case_results_pm_post,
-                    self.worst_case_results_am_post,
-                    self.worst_case_results_pm_post,
-                )
+                return self.avg_case_results_am_post, self.avg_case_results_pm_post, self.worst_case_results_am_post, self.worst_case_results_pm_post
         else:
             if self.post_process_check == False:
                 print(self.avg_case_results_am)
@@ -2844,7 +2688,7 @@ class NNetwork(object):
         plt.show()
 
         myStringIOBytes = io.BytesIO()
-        plt.savefig(myStringIOBytes, format="png")
+        plt.savefig(myStringIOBytes, format='png')
         myStringIOBytes.seek(0)
         my_base_64_pngData = base64.b64encode(myStringIOBytes.read())
         return my_base_64_pngData
@@ -3451,7 +3295,7 @@ class NNetwork(object):
 
             str_io = io.StringIO()
 
-            worst_table_df.to_html(buf=str_io, table_id="annTable")
+            worst_table_df.to_html(buf=str_io, table_id='annTable')
             worst_html_str = str_io.getvalue()
 
             return avg_html_str, worst_html_str
@@ -3570,7 +3414,6 @@ class NNetwork(object):
         self.post_process_cal()
         # self.full_performance_evaluation(directory)
         self.set_inputs_for_table(storage_target)
-        self.import_pretrained_model(directory)
         self.predict()
         self.display_results()
         self.export_results_to_csv(results_file)
