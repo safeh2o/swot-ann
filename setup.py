@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 reqs = [
-    "tensorflow<=2.8",  # TODO find a way to cache tensorflow, can't do <=2.5 for example because it's incompatible on Windows
+    "tensorflow<=2.8",
     "numpy<=1.20",
     "matplotlib<=3.4.1",
     "pandas<=1.2.4",
