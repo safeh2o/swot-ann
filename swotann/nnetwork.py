@@ -1,24 +1,21 @@
-import joblib
-import time
-import os
 import base64
-import io
-from yattag import Doc
 import datetime
-from datetime import timedelta
-from xlrd.xldate import xldate_as_datetime
+import io
+import os
 
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+from xlrd.xldate import xldate_as_datetime
+from yattag import Doc
 
 plt.rcParams.update({"figure.autolayout": True})
-import pandas as pd
 import matplotlib.gridspec as gridspec
-import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
+import pandas as pd
 import scipy.stats
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 """
 TF_CPP_MIN_LOG_LEVEL:
