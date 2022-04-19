@@ -233,7 +233,7 @@ class NNetwork(object):
         water conductivity."""
 
         if not os.path.exists(directory):
-            os.mkdir(directory)
+            os.makedirs(directory)
 
         self.predictors_scaler = self.predictors_scaler.fit(self.predictors)
         self.targets_scaler = self.targets_scaler.fit(self.targets)
