@@ -16,6 +16,7 @@ import scipy.stats
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+import logging
 
 """
 TF_CPP_MIN_LOG_LEVEL:
@@ -27,7 +28,7 @@ from tensorflow import keras
 
 class NNetwork(object):
     def __init__(self, network_count=200, epochs=1000):
-
+        logging.getLogger().setLevel(logging.INFO)
         self.xl_dateformat = r"%Y-%m-%dT%H:%M"
         self.model = None
         self.pretrained_networks = []
@@ -245,7 +246,7 @@ class NNetwork(object):
         self.trained_models = {}
 
         for i in range(self.network_count):
-            print('Training Network ' + str(i))
+            logging.info('Training Network ' + str(i))
             model_out = self.train_network(x, t, directory)
 
             self.trained_models.update({'model_' + str(i): model_out})
@@ -2578,25 +2579,25 @@ class NNetwork(object):
         """
         if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
             if self.post_process_check == False:
-                print(self.avg_case_results_am)
-                print(self.worst_case_results_am)
-                print(self.avg_case_results_pm)
-                print(self.worst_case_results_pm)
+                logging.info(self.avg_case_results_am)
+                logging.info(self.worst_case_results_am)
+                logging.info(self.avg_case_results_pm)
+                logging.info(self.worst_case_results_pm)
                 return self.avg_case_results_am, self.avg_case_results_pm, self.worst_case_results_am, self.worst_case_results_pm
             else:
-                print(self.avg_case_results_am_post)
-                print(self.worst_case_results_am_post)
-                print(self.avg_case_results_pm_post)
-                print(self.worst_case_results_pm_post)
+                logging.info(self.avg_case_results_am_post)
+                logging.info(self.worst_case_results_am_post)
+                logging.info(self.avg_case_results_pm_post)
+                logging.info(self.worst_case_results_pm_post)
                 return self.avg_case_results_am_post, self.avg_case_results_pm_post, self.worst_case_results_am_post, self.worst_case_results_pm_post
         else:
             if self.post_process_check == False:
-                print(self.avg_case_results_am)
-                print(self.avg_case_results_pm)
+                logging.info(self.avg_case_results_am)
+                logging.info(self.avg_case_results_pm)
                 return self.avg_case_results_am, self.avg_case_results_pm
             else:
-                print(self.avg_case_results_am_post)
-                print(self.avg_case_results_pm_post)
+                logging.info(self.avg_case_results_am_post)
+                logging.info(self.avg_case_results_pm_post)
                 return self.avg_case_results_am_post, self.avg_case_results_pm_post
 
     def export_results_to_csv(self, filename):
@@ -2723,7 +2724,7 @@ class NNetwork(object):
             lo_limit = 0
         else:
             lo_limit = round(min(c), 2)
-            print(lo_limit)
+            logging.info(lo_limit)
 
         if max(c) <= 0.75:
             divisions = 16
@@ -2739,7 +2740,7 @@ class NNetwork(object):
             hi_limit = 2
 
         divisions = round((hi_limit - lo_limit) / 0.05, 0) + 1
-        print(divisions)
+        logging.info(divisions)
 
         # Get the data between the limits
         sorted_data = sorted_data[sorted_data > lo_limit]
