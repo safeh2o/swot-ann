@@ -22,7 +22,7 @@ import logging
 TF_CPP_MIN_LOG_LEVEL:
 Defaults to 0, so all logs are shown. Set TF_CPP_MIN_LOG_LEVEL to 1 to filter out INFO logs, 2 to additionally filter out WARNING, 3 to additionally filter out ERROR.
 """
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 from tensorflow import keras
 
 
