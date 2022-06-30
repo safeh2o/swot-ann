@@ -47,7 +47,7 @@ class NNetwork(object):
         self.skipped_rows = []
         self.ruleset = []
 
-        self.layer1_neurons = 12
+        self.layer1_neurons = 4
         self.network_count = network_count
         self.epochs = epochs
 
