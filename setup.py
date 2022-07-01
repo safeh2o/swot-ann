@@ -18,7 +18,7 @@ reqs = [
 
 setuptools.setup(
     name="swot-ann-safeh2o",
-    version="2.0.3",
+    version="2.0.4",
     author="SafeH2O",
     author_email="support@safeh2o.app",
     description="SWOT ANN Project",
