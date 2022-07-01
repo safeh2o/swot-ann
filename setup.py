@@ -14,11 +14,12 @@ reqs = [
     "yattag<=1.14",
     "pillow<=8.2.0",
     "pytest<=6.2.3",
+    "protobuf<=3.20.0"
 ]
 
 setuptools.setup(
     name="swot-ann-safeh2o",
-    version="2.0.4",
+    version="2.0.5",
     author="SafeH2O",
     author_email="support@safeh2o.app",
     description="SWOT ANN Project",
