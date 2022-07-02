@@ -62,7 +62,7 @@ class NNetwork(object):
         self.WB_bandwidth = None
         self.post_process_check = False  # Is post-processed better than raw. If False, uses raw results, if true, uses post-processed results
 
-        self.optimizer = keras.optimizers.Nadam(lr=0.01, beta_1=0.9, beta_2=0.999)
+        self.optimizer = keras.optimizers.Nadam(learning_rate=0.01, beta_1=0.9, beta_2=0.999)
         self.model = keras.models.Sequential()
         self.model.add(
             keras.layers.Dense(self.layer1_neurons, input_dim=5, activation="tanh")
@@ -215,7 +215,7 @@ class NNetwork(object):
         self.input_filename = filename
 
     def set_up_model(self):
-        self.optimizer = keras.optimizers.Nadam(lr=0.01, beta_1=0.9, beta_2=0.999)
+        self.optimizer = keras.optimizers.Nadam(learning_rate=0.01, beta_1=0.9, beta_2=0.999)
         self.model = keras.models.Sequential()
         self.model.add(
             keras.layers.Dense(
