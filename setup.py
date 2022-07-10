@@ -14,12 +14,12 @@ reqs = [
     "yattag==1.14",
     "pillow==9.2.0",
     "pytest==7.1.2",
-    "protobuf==3.20.0"
+    "protobuf==3.20.0",
 ]
 
 setuptools.setup(
     name="swot-ann-safeh2o",
-    version="2.0.6",
+    version="2.0.7",
     author="SafeH2O",
     author_email="support@safeh2o.app",
     description="SWOT ANN Project",
@@ -35,6 +35,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=["swotann"],
-    python_requires=">=3.6",
+    python_requires=">=3.10",
     install_requires=reqs,
 )
