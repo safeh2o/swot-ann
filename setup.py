@@ -4,17 +4,17 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 reqs = [
-    "tensorflow-macos<=2.8;platform_system=='Darwin'",
-    "tensorflow<=2.8;platform_system!='Darwin'",
-    "numpy<=1.20",
-    "matplotlib<=3.4.1",
-    "pandas<=1.4.2",
-    "scikit-learn<=1.0.2",
-    "xlrd<=1.2.0",
-    "yattag<=1.14",
-    "pillow<=8.2.0",
-    "pytest<=6.2.3",
-    "protobuf<=3.20.0"
+    "tensorflow-macos==2.8.0;platform_system=='Darwin'",
+    "tensorflow==2.8.0;platform_system!='Darwin'",
+    "numpy==1.21.0",
+    "matplotlib==3.5.2",
+    "pandas==1.4.2",
+    "scikit-learn==1.0.2",
+    "xlrd==1.2.0",
+    "yattag==1.14",
+    "pillow==9.2.0",
+    "pytest==7.1.2",
+    "protobuf==3.20.0"
 ]
 
 setuptools.setup(
