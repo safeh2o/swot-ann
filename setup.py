@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 reqs = [
-    "tensorflow-macos==2.8.0;platform_system=='Darwin'",
-    "tensorflow==2.8.0;platform_system!='Darwin'",
+    "tensorflow-macos==2.9.0;platform_system=='Darwin'",
+    "tensorflow==2.9.0;platform_system!='Darwin'",
     "numpy==1.21.0",
     "matplotlib==3.5.2",
     "pandas==1.4.2",
