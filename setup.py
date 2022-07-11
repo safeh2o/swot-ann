@@ -35,6 +35,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=["swotann"],
-    python_requires=">=3.10",
+    python_requires=">=3.9",
     install_requires=reqs,
 )
