@@ -62,7 +62,9 @@ class NNetwork(object):
         self.WB_bandwidth = None
         self.post_process_check = False  # Is post-processed better than raw. If False, uses raw results, if true, uses post-processed results
 
-        self.optimizer = keras.optimizers.Nadam(learning_rate=0.01, beta_1=0.9, beta_2=0.999)
+        self.optimizer = keras.optimizers.Nadam(
+            learning_rate=0.01, beta_1=0.9, beta_2=0.999
+        )
         self.model = keras.models.Sequential()
         self.model.add(
             keras.layers.Dense(self.layer1_neurons, input_dim=5, activation="tanh")
@@ -215,7 +217,9 @@ class NNetwork(object):
         self.input_filename = filename
 
     def set_up_model(self):
-        self.optimizer = keras.optimizers.Nadam(learning_rate=0.01, beta_1=0.9, beta_2=0.999)
+        self.optimizer = keras.optimizers.Nadam(
+            learning_rate=0.01, beta_1=0.9, beta_2=0.999
+        )
         self.model = keras.models.Sequential()
         self.model.add(
             keras.layers.Dense(
@@ -298,7 +302,9 @@ class NNetwork(object):
         )
 
         self.calibration_predictions.append(
-            self.targets_scaler.inverse_transform(trained_model.predict(x_norm, verbose=0))
+            self.targets_scaler.inverse_transform(
+                trained_model.predict(x_norm, verbose=0)
+            )
         )
         return trained_model
 
@@ -864,7 +870,8 @@ class NNetwork(object):
         t_norm = self.targets_scaler.transform(self.targets)
 
         base_model = self.model
-        base_model.save(directory + "\\base_network.h5")
+        network_path = os.path.join(directory, "base_network.h5")
+        base_model.save(network_path)
 
         x_cal_norm, x_test_norm, t_cal_norm, t_test_norm = train_test_split(
             x_norm, t_norm, test_size=0.25, shuffle=False, random_state=10
@@ -881,7 +888,7 @@ class NNetwork(object):
         for i in range(0, self.network_count):
             keras.backend.clear_session()
 
-            self.model = keras.models.load_model(directory + "\\base_network.h5")
+            self.model = keras.models.load_model(network_path)
 
             x_norm_train, x_norm_val, t_norm_train, t_norm_val = train_test_split(
                 x_cal_norm,
@@ -907,7 +914,9 @@ class NNetwork(object):
             )
 
             self.verifying_predictions.append(
-                self.targets_scaler.inverse_transform(self.model.predict(x_test_norm))
+                self.targets_scaler.inverse_transform(
+                    self.model.predict(x_test_norm, verbose=0)
+                )
             )
 
         Y_true = np.array(self.verifying_observations)
@@ -1108,7 +1117,8 @@ class NNetwork(object):
         plt.hist(rank, bins=(self.network_count + 1), density=True)
         plt.xlabel("Rank")
         plt.ylabel("Probability")
-        plt.savefig(directory + "\\Verification_Diagnostic_Figs.png", format="png")
+        diag_fig_path = os.path.join(directory, "Verification_Diagnostic_Figs.png")
+        plt.savefig(diag_fig_path, format="png")
         plt.close()
 
         myStringIOBytes = io.BytesIO()
@@ -1277,7 +1287,9 @@ class NNetwork(object):
         for j in range(0, self.network_count):
             key = "se4_frc_net-" + str(j)
             predictions = self.targets_scaler.inverse_transform(
-                self.trained_models["model_" + str(j)].predict(avg_case_inputs_norm_am)
+                self.trained_models["model_" + str(j)].predict(
+                    avg_case_inputs_norm_am, verbose=0
+                )
             ).tolist()
             temp = sum(predictions, [])
             avg_case_results_am.update({key: temp})
@@ -1344,7 +1356,9 @@ class NNetwork(object):
         for j in range(0, self.network_count):
             key = "se4_frc_net-" + str(j)
             predictions = self.targets_scaler.inverse_transform(
-                self.trained_models["model_" + str(j)].predict(avg_case_inputs_norm_pm)
+                self.trained_models["model_" + str(j)].predict(
+                    avg_case_inputs_norm_pm, verbose=0
+                )
             ).tolist()
             temp = sum(predictions, [])
             avg_case_results_pm.update({key: temp})
@@ -1406,7 +1420,7 @@ class NNetwork(object):
                 key = "se4_frc_net-" + str(j)
                 predictions = self.targets_scaler.inverse_transform(
                     self.trained_models["model_" + str(j)].predict(
-                        worst_case_inputs_norm_am
+                        worst_case_inputs_norm_am, verbose=0
                     )
                 ).tolist()
                 temp = sum(predictions, [])
@@ -1477,7 +1491,7 @@ class NNetwork(object):
                 key = "se4_frc_net-" + str(j)
                 predictions = self.targets_scaler.inverse_transform(
                     self.trained_models["model_" + str(j)].predict(
-                        worst_case_inputs_norm_pm
+                        worst_case_inputs_norm_pm, verbose=0
                     )
                 ).tolist()
                 temp = sum(predictions, [])
