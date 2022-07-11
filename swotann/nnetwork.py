@@ -268,7 +268,7 @@ class NNetwork(object):
 
         Performance metrics are calculated and stored for evaluating the network performance.
         """
-        tf.keras.backend.clear_session()
+        keras.backend.clear_session()
         early_stopping_monitor = keras.callbacks.EarlyStopping(
             monitor="val_loss", min_delta=0, patience=10, restore_best_weights=True
         )
@@ -298,7 +298,7 @@ class NNetwork(object):
         )
 
         self.calibration_predictions.append(
-            self.targets_scaler.inverse_transform(trained_model.predict(x_norm))
+            self.targets_scaler.inverse_transform(trained_model.predict(x_norm, verbose=0))
         )
         return trained_model
 
@@ -879,7 +879,7 @@ class NNetwork(object):
         self.verifying_predictions = []
 
         for i in range(0, self.network_count):
-            tf.keras.backend.clear_session()
+            keras.backend.clear_session()
 
             self.model = keras.models.load_model(directory + "\\base_network.h5")
 
