@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 reqs = [
     "tensorflow-macos==2.9.0;platform_system=='Darwin'",
     "tensorflow==2.9.0;platform_system!='Darwin'",
-    "numpy==1.21.0",
+    "numpy==1.22.0",
     "matplotlib==3.5.2",
     "pandas==1.4.2",
     "scikit-learn==1.0.2",
@@ -19,7 +19,7 @@ reqs = [
 
 setuptools.setup(
     name="swot-ann-safeh2o",
-    version="2.0.8",
+    version="2.0.9",
     author="SafeH2O",
     author_email="support@safeh2o.app",
     description="SWOT ANN Project",
