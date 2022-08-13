@@ -13,7 +13,6 @@ plt.rcParams.update({"figure.autolayout": True})
 import matplotlib.gridspec as gridspec
 import pandas as pd
 import scipy.stats
-import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import logging
