@@ -225,9 +225,10 @@ class NNetwork(object):
                 self.layer1_neurons,
                 input_dim=len(self.datainputs.columns),
                 activation="tanh",
+                name="tanh_layer"
             )
         )
-        self.model.add(keras.layers.Dense(1, activation="linear"))
+        self.model.add(keras.layers.Dense(1, activation="linear", name="linear_layer"))
         self.model.compile(loss="mse", optimizer=self.optimizer)
 
     def train_SWOT_network(self, directory):
