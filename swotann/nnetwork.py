@@ -66,9 +66,9 @@ class NNetwork(object):
         )
         self.model = keras.models.Sequential()
         self.model.add(
-            keras.layers.Dense(self.layer1_neurons, input_dim=5, activation="tanh")
+            keras.layers.Dense(self.layer1_neurons, input_dim=5, activation="tanh", name="tanh_init")
         )
-        self.model.add(keras.layers.Dense(1, activation="linear"))
+        self.model.add(keras.layers.Dense(1, activation="linear", name="linear_init"))
         self.model.compile(loss="mse", optimizer=self.optimizer, metrics=["mse"])
 
     def import_data_from_csv(self, filename):
