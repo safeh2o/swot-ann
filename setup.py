@@ -14,7 +14,7 @@ reqs = [
     "yattag==1.14",
     "pillow==9.2.0",
     "pytest==7.1.2",
-    "protobuf==3.20.0",
+    "protobuf==3.20.2",
 ]
 
 setuptools.setup(
