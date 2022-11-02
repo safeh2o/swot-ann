@@ -1,7 +1,7 @@
 import sys
 from swotann.nnetwork import NNetwork
-import tensorflow as tf
-tf.keras.utils.set_random_seed(0)
+#import tensorflow as tf
+#tf.keras.utils.set_random_seed(0)
 
 
 def run_swot():
