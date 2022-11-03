@@ -2,6 +2,7 @@ import base64
 import datetime
 import io
 import os
+import tempfile
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -10,12 +11,13 @@ from xlrd.xldate import xldate_as_datetime
 from yattag import Doc
 
 plt.rcParams.update({"figure.autolayout": True})
+import logging
+
 import matplotlib.gridspec as gridspec
 import pandas as pd
 import scipy.stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-import logging
 
 """
 TF_CPP_MIN_LOG_LEVEL:
@@ -66,7 +68,9 @@ class NNetwork(object):
         )
         self.model = keras.models.Sequential()
         self.model.add(
-            keras.layers.Dense(self.layer1_neurons, input_dim=5, activation="tanh", name="tanh_init")
+            keras.layers.Dense(
+                self.layer1_neurons, input_dim=5, activation="tanh", name="tanh_init"
+            )
         )
         self.model.add(keras.layers.Dense(1, activation="linear", name="linear_init"))
         self.model.compile(loss="mse", optimizer=self.optimizer, metrics=["mse"])
@@ -225,7 +229,7 @@ class NNetwork(object):
                 self.layer1_neurons,
                 input_dim=len(self.datainputs.columns),
                 activation="tanh",
-                name="tanh_layer"
+                name="tanh_layer",
             )
         )
         self.model.add(keras.layers.Dense(1, activation="linear", name="linear_layer"))
@@ -3500,9 +3504,16 @@ class NNetwork(object):
         if sum(matches):
             self.file.drop(self.file.loc[matches].index, inplace=True)
 
-    def run_swot(self, input_file, results_file, report_file, storage_target):
+    def run_swot(
+        self, input_file, results_file, report_file, storage_target, usetmpdir=False
+    ):
         now = datetime.datetime.now()
+        if usetmpdir:
+            tmp_dirpath = tempfile.gettempdir()
+        else:
+            tmp_dirpath = ""
         directory = os.path.join(
+            tmp_dirpath,
             "model_retraining",
             f'{now.strftime(r"%m%d%Y_%H%M%S")}_{os.path.basename(input_file)}',
         )
