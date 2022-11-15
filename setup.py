@@ -12,7 +12,7 @@ reqs = [
     "scikit-learn==1.0.2",
     "xlrd==1.2.0",
     "yattag==1.14",
-    "pillow==9.2.0",
+    "pillow==9.3.0",
     "pytest==7.1.2",
     "protobuf==3.20.0",
 ]
