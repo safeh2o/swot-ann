@@ -1,6 +1,6 @@
-[![Build Status](https://dev.azure.com/safeh2o/SWOT/_apis/build/status/safeh2o.swot-python-analysis?branchName=master)](https://dev.azure.com/safeh2o/SWOT/_build/latest?definitionId=6&branchName=master)
+[![Build Status](https://dev.azure.com/safeh2o/SWOT/_apis/build/status/safeh2o.swot-ann?branchName=main)](https://dev.azure.com/safeh2o/SWOT/_build/latest?definitionId=10&branchName=main)
 
-# swot-python-analysis
+# swot-ann
 Safe Water Optimization Tool ANN Model
 
 The implementation of the network is encapsulated in a single class called
