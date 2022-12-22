@@ -18,6 +18,7 @@ import pandas as pd
 import scipy.stats
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+import tensorflow as tf
 
 """
 TF_CPP_MIN_LOG_LEVEL:
@@ -253,11 +254,45 @@ class NNetwork(object):
         self.calibration_predictions = []
         self.trained_models = {}
 
+        early_stopping_monitor = keras.callbacks.EarlyStopping(
+            monitor="val_loss", min_delta=0, patience=10, restore_best_weights=True
+        )
+
+        x_norm = self.predictors_scaler.transform(x)
+        t_norm = self.targets_scaler.transform(t)
+
+
         for i in range(self.network_count):
             logging.info("Training Network " + str(i))
-            model_out = self.train_network(x, t, directory)
+            tf.random.set_seed(i**2)
+            model_out = keras.models.clone_model(self.model)
+
+            x_norm_train, x_norm_val, t_norm_train, t_norm_val = train_test_split(
+                x_norm, t_norm, train_size=0.333, shuffle=True, random_state=i ** 2
+            )
+
+            new_weights = [
+                np.random.uniform(-0.05, 0.05, w.shape) for w in model_out.get_weights()
+            ]
+            model_out.set_weights(new_weights)
+            model_out.compile(loss="mse", optimizer=self.optimizer)
+            model_out.fit(
+                x_norm_train,
+                t_norm_train,
+                epochs=self.epochs,
+                validation_data=(x_norm_val, t_norm_val),
+                callbacks=[early_stopping_monitor],
+                verbose=0,
+                batch_size=len(t_norm_train),
+            )
+
 
             self.trained_models.update({"model_" + str(i): model_out})
+            self.calibration_predictions.append(
+                self.targets_scaler.inverse_transform(
+                    model_out.predict(x_norm, verbose=0)
+                )
+            )
 
     def train_network(self, x, t, directory):
         """
