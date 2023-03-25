@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 reqs = [
     "tensorflow-macos==2.9.0;platform_system=='Darwin'",
-    "tensorflow==2.9.0;platform_system!='Darwin'",
+    "tensorflow==2.11.1;platform_system!='Darwin'",
     "numpy==1.22.0",
     "matplotlib==3.5.2",
     "pandas==1.4.2",
