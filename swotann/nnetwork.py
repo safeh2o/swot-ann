@@ -2241,7 +2241,7 @@ class NNetwork(object):
 
             elif WATTEMP in self.datainputs.columns:
                 hist_fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
-                    6, 1, figsize=(3.35, 6.69), dpi=300
+                    5, 1, figsize=(3.35, 6.69), dpi=300
                 )
 
                 ax1.set_ylabel("Frequency")
@@ -2304,7 +2304,7 @@ class NNetwork(object):
 
             elif COND in self.datainputs.columns:
                 hist_fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
-                    6, 1, figsize=(3.35, 6.69), dpi=300
+                    5, 1, figsize=(3.35, 6.69), dpi=300
                 )
 
                 ax1.set_ylabel("Frequency")
