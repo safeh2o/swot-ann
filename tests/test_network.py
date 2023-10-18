@@ -4,7 +4,7 @@ import pytest
 import glob
 
 # Import the Network and instantiate
-from swotann.nnetwork import NNetwork
+from swotann.swot_ml import SWOT_ML
 
 testspath = os.path.dirname(__file__)
 # Train
@@ -31,7 +31,7 @@ STORAGE_TARGET = 3
 
 def test_run_harness():
     for file in test_files:
-        net = NNetwork(NETWORK_COUNT, EPOCHS)
+        net = SWOT_ML(NETWORK_COUNT, EPOCHS)
         net.run_swot(file, output_arg1, output_arg2, STORAGE_TARGET)
         for f in output_names + [output_arg2]:
             assert os.path.exists(f)
