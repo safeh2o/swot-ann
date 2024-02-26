@@ -124,16 +124,18 @@ class SWOT_ML(object):
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
 
         # Locate the rows of the missing data
-        drop_threshold = 0.90 * len(self.file.loc[:, [FRC_IN]])
+        drop_threshold = np.maximum(0.10 * len(self.file.loc[:, [FRC_IN]]),200)
         nan_rows_watt = self.file.loc[self.file[WATTEMP].isnull()]
-        if len(nan_rows_watt) < drop_threshold:
+
+        if len(self.file.loc[:, [FRC_IN]])-len(nan_rows_watt) > drop_threshold:
             self.execute_rule(
                 "Missing Water Temperature Measurement",
                 WATTEMP,
                 self.file[WATTEMP].isnull(),
             )
+
         nan_rows_cond = self.file.loc[self.file[COND].isnull()]
-        if len(nan_rows_cond) < drop_threshold:
+        if len(self.file.loc[:, [FRC_IN]])-len(nan_rows_cond) > drop_threshold:
             self.execute_rule("Missing EC Measurement", COND, self.file[COND].isnull())
         self.skipped_rows = df.loc[df.index.difference(self.file.index)]
 
@@ -197,29 +199,26 @@ class SWOT_ML(object):
             self.predictors[WATTEMP] = self.file[WATTEMP]
             self.var_names.append("Water Temperature(" + r"$\degree$" + "C)")
             self.average_case_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
+            p = self.partial_corr(WATTEMP,  self.predictors.columns.drop([WATTEMP]))
+            if p > 0:
+                self.worst_case_wattemp = np.percentile(
+                    self.file[WATTEMP].dropna().to_numpy(), 95
+                )
+            elif p < 0:
+                self.worst_case_wattemp = np.percentile(
+                    self.file[WATTEMP].dropna().to_numpy(), 5
+                )
 
         if len(nan_rows_cond) < drop_threshold:
             self.predictors[COND] = self.file[COND]
             self.var_names.append("EC (" + r"$\mu$" + "s/cm)")
             self.average_case_cond = np.median(self.file[COND].dropna().to_numpy())
-
-        if WATTEMP in self.predictors.columns:
-            p=self.partial_corr(WATTEMP,FRC_OUT,self.predictors.columns.drop([WATTEMP]))
-            if p>0:
-                self.worst_case_wattemp = np.percentile(
-                    self.file[WATTEMP].dropna().to_numpy(), 95
-                )
-            elif p<0:
-                self.worst_case_wattemp = np.percentile(
-                    self.file[WATTEMP].dropna().to_numpy(), 5
-                )
-        if COND in self.predictors.columns:
-            p=self.partial_corr(COND,FRC_OUT,self.predictors.columns.drop([COND]))
-            if p>0:
+            p = self.partial_corr(COND, self.predictors.columns.drop([COND]))
+            if p > 0:
                 self.worst_case_cond = np.percentile(
                     self.file[COND].dropna().to_numpy(), 95
                 )
-            elif p<0:
+            elif p < 0:
                 self.worst_case_cond = np.percentile(
                     self.file[COND].dropna().to_numpy(), 5
                 )
@@ -230,7 +229,7 @@ class SWOT_ML(object):
         self.input_filename = filename
         return
 
-    def partial_corr(self, target_name,y_name, other_names):
+    def partial_corr(self, target_name, other_names):
         """
         :param target_name: name of target variable for which partial corr is calculated
         :param y_name: name of the y_variable for the partial correlation
@@ -264,25 +263,16 @@ class SWOT_ML(object):
         Ni=len(self.predictors.columns)
         Nh=8
         No=len(quantiles)
-        CQRNN_dof=Ni*Nh+Nh+Nh*Nh+Nh+Nh*No+No
-        if len(self.predictors.columns)==3:
-            self.model=svqr(quantiles=self.quantiles,
-                                            kernel='rbf',
-                                            C=10)
-        elif len(self.targets)<CQRNN_dof:
-            self.model = svqr(quantiles=self.quantiles,
-                                              kernel='rbf',
-                                              C=10)
 
-        else:
-            self.model=cqrann(quantiles=self.quantiles,
-                                              loss='smoothed',
-                                              epsilon=10**-32,
-                                              hidden_activation='tanh',
-                                              kernel_initializer='GlorotUniform',
-                                              n_hidden=2,
-                                              hl_size=8,
-                                              left_censor=None)
+
+        self.model=QuantReg_Models.cqrann(quantiles=self.quantiles,
+                                          loss='smoothed',
+                                          epsilon=10**-32,
+                                          hidden_activation='tanh',
+                                          kernel_initializer='GlorotUniform',
+                                          n_hidden=5,
+                                          hl_size=4,
+                                          left_censor=None)
 
         return
 
@@ -317,8 +307,7 @@ class SWOT_ML(object):
         perf_df[FRC_IN]=self.datainputs[FRC_IN].values
         perf_df[FRC_OUT]=self.targets.flatten()
 
-        self.scores=QuantReg_Functions.evaluate_model(perf_df,self.quantiles,FRC_IN,FRC_OUT,os.path.splitext(filename)[0]
-                                                      ,save=True)
+        self.scores=QuantReg_Functions.evaluate_model(perf_df,self.quantiles,FRC_OUT,os.path.splitext(filename)[0],save=True)
 
         return
 
@@ -346,14 +335,48 @@ class SWOT_ML(object):
         perf_df[FRC_IN] = self.test_x_data[:,0]
         perf_df[FRC_OUT] = self.verifying_observations.flatten()
 
-        QuantReg_Functions.evaluate_model(perf_df, self.quantiles, FRC_IN, FRC_OUT, os.path.splitext(filename)[0], save=True)
+        QuantReg_Functions.evaluate_model(perf_df, self.quantiles, FRC_IN,  os.path.splitext(filename)[0], save=True)
         return
 
     def set_inputs_for_table(self, storage_target):
 
-        frc = np.arange(0.20, 2.05, 0.05)
-        lag_time = [storage_target for i in range(0, len(frc))]
-        am_collect = [0 for i in range(0, len(frc))]
+        self.frc = np.arange(0.20, 2.05, 0.05)
+        if storage_target<24:
+            self.lag_time=np.arange(3,24.1,3)
+        else:
+            self.lag_time=np.arange(3,storage_target+1,3)
+        if WATTEMP in self.predictors.columns and COND in self.predictors.columns:
+            self.full_pred_array=np.array(
+                np.meshgrid(self.frc,
+                            self.lag_time,
+                            np.array([0,1]),
+                            np.array([self.average_case_wattemp,
+                                      self.worst_case_wattemp]),
+                            np.array([self.average_case_cond,
+                                      self.worst_case_cond]))).T.reshape(-1,len(self.predictors.columns))
+        elif WATTEMP in self.predictors.columns:
+            self.full_pred_array = np.array(
+                np.meshgrid(self.frc,
+                            self.lag_time,
+                            np.array([0, 1]),
+                            np.array([self.average_case_wattemp,
+                                      self.worst_case_wattemp]))).T.reshape(-1, len(self.predictors.columns))
+        elif COND in self.predictors.columns:
+            self.full_pred_array = np.array(
+                np.meshgrid(self.frc,
+                            self.lag_time,
+                            np.array([0, 1]),
+                            np.array([self.average_case_cond,
+                                      self.worst_case_cond]))).T.reshape(-1, len(self.predictors.columns))
+        else:
+            self.full_pred_array = np.array(
+                np.meshgrid(self.frc,
+                            self.lag_time,
+                            np.array([0, 1]))).T.reshape(-1, len(self.predictors.columns))
+
+        self.full_pred_array=pd.DataFrame(data=self.full_pred_array,columns=self.predictors.columns)
+
+        '''am_collect = [0 for i in range(0, len(frc))]
         pm_collect = [1 for i in range(0, len(frc))]
         temp_med_am = {
             "ts_frc": frc,
@@ -394,7 +417,7 @@ class SWOT_ML(object):
         self.avg_case_predictors_am = pd.DataFrame(temp_med_am)
         self.avg_case_predictors_pm = pd.DataFrame(temp_med_pm)
         self.worst_case_predictors_am = pd.DataFrame(temp_95_am)
-        self.worst_case_predictors_pm = pd.DataFrame(temp_95_pm)
+        self.worst_case_predictors_pm = pd.DataFrame(temp_95_pm)'''
 
     def risk_eval(self):
         """
@@ -403,7 +426,40 @@ class SWOT_ML(object):
         """
 
         # Normalize the inputs using the input scaler loaded
-        avg_case_inputs_norm_am = self.predictors_scaler.transform(self.avg_case_predictors_am)
+        pred_array_scaled=self.predictors_scaler.transform(self.full_pred_array)
+
+        temp_results = self.model.predict(pred_array_scaled)
+        for key in temp_results.keys():
+            temp_results[key] = self.targets_scaler.inverse_transform(temp_results[key].reshape(-1, 1)).flatten()
+
+        temp_results = pd.DataFrame(temp_results)
+        temp_results = temp_results.where(temp_results > 0, 0)
+
+
+        proba_0 = 1-self.quantiles[np.argmin(np.array(np.abs(0.0 - temp_results)), axis=1)]
+        proba_20 = 1-self.quantiles[np.argmin(np.array(np.abs(0.20 - temp_results)), axis=1)]
+        proba_25 = 1-self.quantiles[np.argmin(np.array(np.abs(0.25 - temp_results)), axis=1)]
+        proba_30 = 1-self.quantiles[np.argmin(np.array(np.abs(0.30 - temp_results)), axis=1)]
+
+        self.full_results = pd.concat([self.full_pred_array, temp_results], axis=1)
+        self.full_results["probability=0"] = proba_0
+        self.full_results["probability<=0.20"] = proba_20
+        self.full_results["probability<=0.25"] = proba_25
+        self.full_results["probability<=0.30"] = proba_30
+
+        grid_size =len(self.frc) * len(self.lag_time)
+        total_grids=int(len(pred_array_scaled)/grid_size)
+        grids=[]
+
+        for i in range(total_grids):
+            start_idx=i*grid_size
+            end_idx=(i+1)*grid_size
+            grids.append(proba_20[start_idx:end_idx].reshape(len(self.frc), len(self.lag_time)))
+        self.grids=np.array(grids)
+        self.max_grid=pd.DataFrame(data=np.max(self.grids,axis=0),index=self.frc,columns=self.lag_time)
+        self.min_grid=pd.DataFrame(data=np.min(self.grids,axis=0),index=self.frc,columns=self.lag_time)
+
+        '''avg_case_inputs_norm_am = self.predictors_scaler.transform(self.avg_case_predictors_am)
         avg_case_inputs_norm_pm = self.predictors_scaler.transform(self.avg_case_predictors_pm)
         worst_case_inputs_norm_am = self.predictors_scaler.transform(
             self.worst_case_predictors_am
@@ -559,52 +615,14 @@ class SWOT_ML(object):
             bands["Upper Bound"] = ub
             bands.index = self.avg_case_predictors_am[FRC_IN]
             bands = bands[["Lower Bound", "Upper Bound"]]
-            self.risk_bands_0 = bands
+            self.risk_bands_0 = bands'''
 
         return
 
-    def results_visualization(self, filename, storage_target):
-        # Variables to plot - Full range, 95th percentile, 99th percentile, median, the three risks
-        risk_fig = plt.figure(figsize=(6.69, 3.35), dpi=300)
-        plt.fill_between(self.risk_bands_20.index, self.risk_bands_20["Lower Bound"], self.risk_bands_20["Upper Bound"], alpha=0.5,
-                         facecolor="#b80000",
-                         label='Risk Range - FRC below 0.2 mg/L')
-        plt.plot(self.risk_bands_20.index, self.risk_bands_20["Lower Bound"],c="#b80000")
-        plt.plot(self.risk_bands_20.index, self.risk_bands_20["Upper Bound"], c="#b80000")
-
-
-        '''plt.fill_between(self.risk_bands_0.index, self.risk_bands_0["Lower Bound"], self.risk_bands_0["Upper Bound"], alpha=0.5,
-                         facecolor="#b80000",
-                         label='Risk Range - 0 mg/L FRC')'''
-
-        plt.xlim([0.2, 2])
-        plt.xlabel("Tapstand FRC (mg/L)")
-        plt.ylim([0, 1])
-        plt.ylabel("Risk")
-        plt.legend(
-            bbox_to_anchor=(0.999, 0.999),
-            shadow=False,
-            fontsize="small",
-            ncol=1,
-            labelspacing=0.1,
-            columnspacing=0.2,
-            handletextpad=0.1,
-            loc="upper right",
-        )
-        plt.subplots_adjust(bottom=0.15, right=0.95)
-        plt.savefig(
-            os.path.splitext(filename)[0] + "_Risk_Fig.png",
-            format="png",
-            bbox_inches="tight",
-        )
-        StringIOBytes_risk = io.BytesIO()
-        plt.savefig(StringIOBytes_risk, format="png", bbox_inches="tight")
-        StringIOBytes_risk.seek(0)
-        risk_base_64_pngData = base64.b64encode(StringIOBytes_risk.read())
-        # pl.dump(fig, open(os.path.splitext(filename)[0] + 'Fig2.pickle', 'wb'))
-        plt.close()
-
-        return risk_base_64_pngData
+    def generate_metadata(self):
+        metadata = {}
+        metadata["average_time"] = self.avg_time_elapsed  # in seconds
+        return metadata
 
     def display_results(self):
         """
@@ -613,291 +631,27 @@ class SWOT_ML(object):
         Display and return all the contents of the self.results variable which is a pandas Dataframe object
         :return: A Pandas Dataframe object (self.results) containing all the result of the predictions
         """
-        if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
+        logging.info(self.full_results)
+        logging.info(self.min_grid)
+        logging.info(self.max_grid)
+        return (
+            self.full_results,
+            self.min_grid,
+            self.max_grid
+        )
 
-            logging.info(self.avg_case_results_am)
-            logging.info(self.worst_case_results_am)
-            logging.info(self.avg_case_results_pm)
-            logging.info(self.worst_case_results_pm)
-            return (
-                self.avg_case_results_am,
-                self.avg_case_results_pm,
-                self.worst_case_results_am,
-                self.worst_case_results_pm,
-                )
-        else:
-            logging.info(self.avg_case_results_am)
-            logging.info(self.avg_case_results_pm)
-            return self.avg_case_results_am, self.avg_case_results_pm
 
     def export_results_to_csv(self, filename):
-        self.avg_case_results_am.to_csv(
-            os.path.splitext(filename)[0] + "_average_case_am.csv", index=False
+        self.full_results.to_csv(
+            os.path.splitext(filename)[0] + "_full_prediction_results.csv", index=False
         )
-        self.avg_case_results_pm.to_csv(
-            os.path.splitext(filename)[0] + "_average_case_pm.csv", index=False
+        self.min_grid.to_csv(
+            os.path.splitext(filename)[0] + "_min_predicted_safety.csv", index=True
         )
-
-        self.risk_bands_20.to_csv(os.path.splitext(filename)[0] + "Risk_Bands_02.csv", index=True)
-        self.risk_bands_0.to_csv(os.path.splitext(filename)[0] + "Risk_Bands_0.csv", index=True)
-
-        if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
-            self.worst_case_results_am.to_csv(
-                os.path.splitext(filename)[0] + "_worst_case_am.csv", index=False
-            )
-            self.worst_case_results_pm.to_csv(
-                os.path.splitext(filename)[0] + "_worst_case_pm.csv", index=False
-            )
+        self.max_grid.to_csv(
+            os.path.splitext(filename)[0] + "_max_predicted_safety.csv", index=True
+        )
         return
-
-    def generate_html_report(self, filename, storage_target):
-        """Generates an html report of the SWOT results. The report
-        is saved on disk under the name 'filename'."""
-
-        df = self.datainputs
-        frc = df[FRC_IN]
-
-        #risk = self.results_visualization(filename, storage_target)
-        #risk.decode("UTF-8")
-
-        str_io = io.StringIO()
-        pd.DataFrame(self.scores).to_html(buf=str_io, table_id="ScoresTable")
-        scores_html_str = str_io.getvalue()
-
-
-        if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
-            avg_html_table, worst_html_table = self.prepare_table_for_html_report(
-                storage_target
-            )
-        else:
-            avg_html_table = self.prepare_table_for_html_report(storage_target)
-
-        skipped_rows_table = self.skipped_rows_html()
-
-        doc, tag, text, line = Doc().ttl()
-        with tag("h1", klass="title"):
-            text("SWOT ARTIFICIAL NEURAL NETWORK REPORT")
-        with tag("p", klass="swot_version"):
-            text("SWOT ANN Code Version: " + self.software_version)
-        with tag("p", klass="input_filename"):
-            text("Input File Name: " + os.path.basename(self.input_filename))
-        with tag("p", klass="date"):
-            text("Date Generated: " + self.today)
-        with tag("p", klass="time_difference"):
-            text(
-                "Average time between tapstand and household: "
-                + str(int(self.avg_time_elapsed // 3600))
-                + " hours and "
-                + str(int((self.avg_time_elapsed // 60) % 60))
-                + " minutes"
-            )
-        with tag("p"):
-            text("Total Samples: " + str(len(frc)))
-
-        with tag("h2", klass="Header"):
-            text("Predicted Risk")
-        '''with tag("p", klass="Risk Fig Text"):
-            text(
-                "Figure and tables showing predicted risk of household FRC below 0.2 mg/L for average and worst case scenarios for both AM and PM collection. Risk obtained from forecast pdf (above) and taken as cumulative probability of houeshold FRC below 0.2 mg/L. Note that 0% predicted risk of household FRC below 0.2 mg/L does not mean that there is no possibility of household FRC being below 0.2 mg/L, simply that the predicted risk is too low to be measured. The average case target may, in some, cases be more conservative than the worst case targets as the worst case target is derived on the assumption that higher conductivity and water temperature will lead to greater decay (as confirmed by FRC decay chemisty and results at past sites). However, this may not be true in all cases, so the most conservative target is always recommended."
-            )
-        with tag("div", id="Risk Graphs"):
-            doc.stag(
-                "img",
-                src=os.path.basename(
-                    os.path.splitext(filename)[0] + "_Risk_Fig.png"
-                ),
-            )'''
-
-        if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
-            with tag("h2", klass="Header"):
-                text("Average Case Targets Table")
-            with tag("table", id="average case table"):
-                doc.asis(avg_html_table)
-            with tag("h2", klass="Header"):
-                text("Worst Case Targets Table")
-            with tag("table", id="worst case table"):
-                doc.asis(worst_html_table)
-
-        else:
-            with tag("h2", klass="Header"):
-                text("Targets Table")
-            with tag("table", id="average case table"):
-                doc.asis(avg_html_table)
-
-
-        with tag("h2", klass="Header"):
-            text("Model Diagnostics")
-        with tag("p", klass="Performance Indicator General Text"):
-            text(
-                "This table summarizes the scores obtained by the model during training. Percent Capture and Percent "
-                "Capture (HH FRC < 0.2 mg/L) should be higher (ideal is 100% for both) and the remaining scores should"
-                "be lower. The best Delta Score is 1, the rest have a best score of 0. Note high Delta scores occur at "
-                "times when there are many observations."
-            )
-        with tag("table", klass="Performance Table"):
-            doc.asis(scores_html_str)
-        # doc.asis(
-        #     '<object data="'
-        #     + os.path.basename(
-        #         os.path.splitext(filename)[0] + "_Calibration_Diagnostic_Figs.png"
-        #     )
-        #     + '" type="image/jpeg"></object>'
-        # )
-
-        doc.asis(skipped_rows_table)
-
-        totalmatches = 0
-        if len(self.ruleset):
-            with tag("ul", id="ann_ruleset"):
-                for rule in self.ruleset:
-                    totalmatches += rule[2]
-                    line("li", "%s. Matches: %d" % (rule[0], rule[2]))
-
-        with tag("div", id="pythonSkipped_count"):
-            text(totalmatches)
-
-        file = open(filename, "w+")
-        file.write(doc.getvalue())
-        file.close()
-
-        return doc.getvalue()
-
-    def generate_metadata(self):
-        metadata = {}
-        metadata["average_time"] = self.avg_time_elapsed  # in seconds
-        return metadata
-
-    def prepare_table_for_html_report(self, storage_target):
-        """Formats the results into an html table for display."""
-
-        avg_table_df = pd.DataFrame()
-        avg_table_df["Input FRC (mg/L)"] = self.avg_case_results_am[FRC_IN]
-        avg_table_df["Storage Duration for Target"] = storage_target
-        if WATTEMP in self.datainputs.columns:
-            avg_table_df["Water Temperature (Degrees C)"] = self.avg_case_results_am[
-                WATTEMP
-            ]
-        if COND in self.datainputs.columns:
-            avg_table_df[
-                "Electrical Conductivity (s*10^-6/cm)"
-            ] = self.avg_case_results_am[COND]
-
-        avg_table_df[
-            "Median Predicted Household FRC Concentration (mg/L) - AM Collection"
-        ] = np.round(self.avg_case_results_am["median"], decimals=3)
-        avg_table_df[
-            "Median Predicted Household FRC Concentration (mg/L) - PM Collection"
-        ] = np.round(self.avg_case_results_pm["median"], decimals=3)
-        avg_table_df[
-            "Predicted Risk of Household FRC below 0.20 mg/L - AM Collection"
-        ] = np.round(self.avg_case_results_am["probability<=0.20"], decimals=3)
-        avg_table_df[
-            "Predicted Risk of Household FRC below 0.20 mg/L - PM Collection"
-        ] = np.round(self.avg_case_results_pm["probability<=0.20"], decimals=3)
-        avg_table_df[
-            "Predicted Risk of No Household FRC - AM Collection"
-        ] = np.round(self.avg_case_results_am["probability=0"], decimals=3)
-        avg_table_df[
-            "Predicted Risk of No Household FRC - PM Collection"
-        ] = np.round(self.avg_case_results_pm["probability=0"], decimals=3)
-
-        str_io = io.StringIO()
-
-        avg_table_df.to_html(buf=str_io, table_id="annTable")
-        avg_html_str = str_io.getvalue()
-
-        if WATTEMP in self.datainputs.columns or COND in self.datainputs.columns:
-            worst_table_df = pd.DataFrame()
-            worst_table_df["Input FRC (mg/L)"] = self.worst_case_results_am[FRC_IN]
-            worst_table_df["Storage Duration for Target"] = storage_target
-            if WATTEMP in self.datainputs.columns:
-                worst_table_df[
-                    "Water Temperature(" + r"$\degree$" + "C)"
-                ] = self.worst_case_results_am[WATTEMP]
-            if COND in self.datainputs.columns:
-                worst_table_df[
-                    "Electrical Conductivity (" + r"$\mu$" + "s/cm)"
-                ] = self.worst_case_results_am[COND]
-            worst_table_df["Storage Duration for Target"] = storage_target
-
-            worst_table_df[
-                "Median Predicted FRC level at Household (mg/L) - AM Collection"
-            ] = np.round(self.worst_case_results_am["median"], decimals=3)
-            worst_table_df[
-                "Median Predicted FRC level at Household (mg/L) - PM Collection"
-            ] = np.round(self.worst_case_results_pm["median"], decimals=3)
-            worst_table_df[
-                "Predicted Risk of Household FRC below 0.20 mg/L - AMM Collection"
-            ] = np.round(
-                self.worst_case_results_am["probability<=0.20"], decimals=3
-            )
-            worst_table_df[
-                "Predicted Risk of Household FRC below 0.20 mg/L - PM Collection"
-            ] = np.round(
-                self.worst_case_results_pm["probability<=0.20"], decimals=3
-            )
-            worst_table_df[
-                "Predicted Risk of No Household FRC - AMM Collection"
-            ] = np.round(
-                self.worst_case_results_am["probability=0"], decimals=3
-            )
-            worst_table_df[
-                "Predicted Risk of No Household FRC - PM Collection"
-            ] = np.round(
-                self.worst_case_results_pm["probability=0"], decimals=3
-            )
-
-            str_io = io.StringIO()
-
-            worst_table_df.to_html(buf=str_io, table_id="annTable")
-            worst_html_str = str_io.getvalue()
-
-            return avg_html_str, worst_html_str
-        else:
-            return avg_html_str
-
-    def skipped_rows_html(self):
-        if self.skipped_rows.empty:
-            return ""
-
-        printable_columns = [
-            "ts_datetime",
-            FRC_IN,
-            "hh_datetime",
-            FRC_OUT,
-            WATTEMP,
-            COND,
-        ]
-        required_columns = [rule[1] for rule in self.ruleset]
-
-        doc, tag, text = Doc().tagtext()
-
-        with tag(
-            "table",
-            klass="table center fill-whitespace",
-            id="pythonSkipped",
-            border="1",
-        ):
-            with tag("thead"):
-                with tag("tr"):
-                    for col in printable_columns:
-                        with tag("th"):
-                            text(col)
-            with tag("tbody"):
-                for (_, row) in self.skipped_rows[printable_columns].iterrows():
-                    with tag("tr"):
-                        for col in printable_columns:
-                            with tag("td"):
-                                # check if required value in cell is nan
-                                if col in required_columns and (
-                                    not row[col] or row[col] != row[col]
-                                ):
-                                    with tag("div", klass="red-cell"):
-                                        text("")
-                                else:
-                                    text(row[col])
-
-        return doc.getvalue()
 
     def valid_dates(self, series):
         mask = []
@@ -974,206 +728,6 @@ class SWOT_ML(object):
         self.risk_eval()
         self.display_results()
         self.export_results_to_csv(results_file)
-        self.generate_html_report(report_file, storage_target)
         metadata = self.generate_metadata()
         return metadata
 
-class cqrann:
-    def __init__(self, quantiles, hidden_activation='tanh',kernel_initializer='GlorotUniform', output_activation='linear', loss='pinball',
-                 epsilon=0, n_hidden=1, hl_size=4, optimizer='Nadam', validation_percent=0.1,left_censor=None):
-        self.quantiles = quantiles
-        self.No = len(quantiles)
-
-        if loss == 'pinball':
-            self.loss = loss
-        elif loss == 'smoothed':
-            self.loss = loss
-            self.epsilon=epsilon
-        else:
-            raise ValueError("Acceptable loss functions are 'pinball' or 'smoothed'")
-
-        self.n_hidden = n_hidden
-        self.Nh = hl_size
-        self.hidden_activation = hidden_activation
-        self.kernel_initializer = kernel_initializer
-        self.output_activation = output_activation
-        self.optimizer = optimizer
-        self.left_censor = None
-        if left_censor is not None:
-            self.left_censor = left_censor
-        self.build_status = 0
-        self.train_status = 0
-
-
-        self.Ni = None
-        self.val = validation_percent
-        self.models = {}
-        return
-
-
-    def build_model(self):
-        model = keras.models.Sequential()
-        for i in range(self.n_hidden):
-
-            model.add(keras.layers.Dense(self.Nh, activation=self.hidden_activation, kernel_initializer="uniform",
-                                     bias_initializer="zeros"))
-        model.add(keras.layers.Dense(self.No, kernel_initializer="uniform", bias_initializer="zeros", activation=self.output_activation))
-        if self.left_censor is not None:
-            model.add(keras.layers.ThresholdedReLU(theta=self.left_censor))
-        model.compile(optimizer=self.optimizer, loss=self.loss, loss_weights=None)
-        self.build_status=1
-        self.base_model=model
-        return
-
-
-    def fit(self, X, y):
-        if self.build_status==0:
-            self.build_model()
-
-        early_stopping_monitor = keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.00000001,
-                                                               patience=100,
-                                                               restore_best_weights=True)
-
-        tf.keras.backend.clear_session()
-        model = keras.models.clone_model(self.base_model)
-
-        if self.loss == 'smoothed':
-            model.cost = QuantReg_Functions.simultaneous_loss_keras(self.quantiles, self.epsilon)
-        else:
-            #model.cost=QuantReg_Functions.pinball_loss_keras(self.quantiles)
-            model.cost = QuantReg_Functions.simultaneous_loss_keras(self.quantiles, 0.0000000000000000000000000000001)
-
-        model.compile(optimizer=self.optimizer, loss=model.cost)
-        model.fit(X, y, validation_split=self.val, epochs=500, callbacks=[early_stopping_monitor],verbose=False)
-        self.model=model
-        self.train_status = 1
-        return
-
-    def predict(self,X):
-        if self.train_status == 0:
-            raise ValueError("Model must be trained before predicting")
-
-        predarray=self.model.predict(X)
-        preds={}
-        for q in range(len(self.quantiles)):
-            preds.update({str(np.round(self.quantiles[q],decimals=4)):predarray[:,q]})
-        return preds
-
-class svqr:
-    def __init__(self, quantiles, C=1, kernel='linear', degree=3, gamma='auto', c0=1):
-        self.C = C
-        self.kernel = kernel
-        self.quantiles = quantiles
-        self.gamma = gamma
-        self.c0 = c0
-        self.degree = degree
-        self.train_status = 0
-
-        self.kernel_dict = {
-            'linear': self.linear_kernel_matrix,
-            'rbf': self.rbf_kernel_matrix,
-            'polynomial': self.polynomial_kernel_matrix,
-            'sigmoid': self.sigmoid_kernel_matrix
-        }
-
-        if self.kernel not in self.kernel_dict.keys():
-            Warning(
-                "Value Error: " + self.kernel + " is not a valid kernel. Valid kernels are: 'linear', 'rbf', 'polynomial', or 'sigmoid'")
-        self.models = {}
-        return
-
-    def fit(self, X, y):
-        '''From Takeuchi et al. (2006), using the dual problem, the minimization is 1/1*alphaTKalpha-alphaTy subject to
-        C(tau-1)<=alpha<=C*tau
-        where w=sum(alpha_i, phi(xi)'''
-
-        n_samples, n_features = X.shape
-
-        if self.gamma == 'scale':
-            self.gamma = 1 / (n_features * X.var())
-        if self.gamma == 'auto':
-            self.gamma = 1 / n_features
-
-        kern = self.kernel_dict[self.kernel]
-        K = kern(X, X)
-        G = K
-        try:
-            np.linalg.cholesky(G)
-        except np.linalg.linalg.LinAlgError:
-            G = G + np.eye(n_samples) * 1e-10
-
-        a = y
-        C = np.vstack((np.eye(n_samples), -1 * np.eye(n_samples)))
-        C = np.vstack((np.ones(n_samples), C))
-        for q in self.quantiles:
-            b0 = 0.0
-            b0 = np.append(b0, np.array([self.C * (q - 1) for i in range(n_samples)]))
-            b0 = np.append(b0, np.array([-1 * self.C * q for i in range(n_samples)]))
-            try:
-                res = quadprog.solve_qp(G=G, a=a, C=C.T, b=b0, meq=1)
-            except ValueError:
-                res = quadprog.solve_qp(G=G + np.eye(n_samples) * 1e-10, a=a, C=C.T, b=b0, meq=1)
-            alpha = res[0]
-            f = np.matmul(alpha, K)
-            offshift = np.argmin(
-                (np.round(alpha, 3) - (self.C * q)) ** 2 + (np.round(alpha, 3) - (self.C * (q - 1))) ** 2)
-
-            model = {'alpha': alpha, 'b':y[offshift] - f[offshift]}
-
-            self.models.update({str(q): model})
-        self.sv = X
-        self.train_status = 1
-        return
-
-    def linear_kernel_matrix(self, x_mat, y_mat):
-        n_samp_x = x_mat.shape[0]
-        n_samp_y = y_mat.shape[0]
-
-        kern_mat = np.zeros((n_samp_x, n_samp_y))
-        for i in range(n_samp_x):
-            for j in range(n_samp_y):
-                kern_mat[i, j] = np.dot(x_mat[i], y_mat[j])
-        return kern_mat
-
-    def rbf_kernel_matrix(self, x_mat, y_mat):
-        n_samp_x = x_mat.shape[0]
-        n_samp_y = y_mat.shape[0]
-
-        kern_mat = np.zeros((n_samp_x, n_samp_y))
-        for i in range(n_samp_x):
-            for j in range(n_samp_y):
-                kern_mat[i, j] = np.exp(-1 * self.gamma * (np.linalg.norm(x_mat[i, :] - y_mat[j, :]) ** 2))
-        return kern_mat
-
-    def sigmoid_kernel_matrix(self, x_mat, y_mat):
-        n_samp_x = x_mat.shape[0]
-        n_samp_y = y_mat.shape[0]
-
-        kern_mat = np.zeros((n_samp_x, n_samp_y))
-        for i in range(n_samp_x):
-            for j in range(n_samp_y):
-                kern_mat[i, j] = np.tanh(self.gamma * np.dot(x_mat[i], y_mat[j]) + self.c0)
-        return kern_mat
-
-    def polynomial_kernel_matrix(self, x_mat, y_mat):
-        n_samp_x = x_mat.shape[0]
-        n_samp_y = y_mat.shape[0]
-
-        kern_mat = np.zeros((n_samp_x, n_samp_y))
-        for i in range(n_samp_x):
-            for j in range(n_samp_y):
-                kern_mat[i, j] = (self.gamma * np.dot(x_mat[i], y_mat[j]) + self.c0) ** self.degree
-        return kern_mat
-
-    def predict(self, X):
-        if self.train_status == 0:
-            raise ValueError("Model must be trained before predicting")
-        kern = self.kernel_dict[self.kernel]
-
-        x_proj = kern(X, self.sv)
-
-        preds = {}
-        for q in self.quantiles:
-            model = self.models[str(q)]
-            preds.update({str(np.round(q, decimals=4)): np.dot(x_proj, model['alpha']) + model['b']})
-        return preds
