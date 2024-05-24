@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from xlrd.xldate import xldate_as_datetime
 from yattag import Doc
-from statsmodels.api import OLS
 import logging
+from statsmodels.api import OLS
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -17,12 +17,6 @@ import keras
 import tensorflow as tf
 from swotann import QuantReg_Functions
 from swotann import QuantReg_Models
-import quadprog
-import cvxopt
-cvxopt.solvers.options['maxiters'] = 100
-cvxopt.solvers.options['feastol'] = 1e-7
-cvxopt.solvers.options['reltol'] = 1e-6
-cvxopt.solvers.options['abstol'] = 1e-7
 
 plt.rcParams.update({"figure.autolayout": True})
 
@@ -109,21 +103,22 @@ class SWOT_ML(object):
         # To add a new rule, call the method execute_rule with the parameters (description, affected_column, query)
         self.execute_rule("Invalid tapstand FRC", FRC_IN, self.file[FRC_IN].isnull())
         self.execute_rule("Invalid household FRC", FRC_OUT, self.file[FRC_OUT].isnull())
-        self.execute_rule(
-            "Invalid tapstand date/time",
-            "ts_datetime",
-            self.valid_dates(self.file["ts_datetime"]),
-        )
-        self.execute_rule(
-            "Invalid household date/time",
-            "hh_datetime",
-            self.valid_dates(self.file["hh_datetime"]),
-        )
+        #self.execute_rule(
+        #    "Invalid tapstand date/time",
+        #    "ts_datetime",
+        #    self.valid_dates(self.file["ts_datetime"]),
+        #)
+        #self.execute_rule(
+        #    "Invalid household date/time",
+        #    "hh_datetime",
+        #    self.valid_dates(self.file["hh_datetime"]),
+        #)
         self.skipped_rows = df.loc[df.index.difference(self.file.index)]
 
         self.file.reset_index(drop=True, inplace=True)  # fix dropped indices in pandas
 
         # Locate the rows of the missing data
+
         drop_threshold = np.maximum(0.10 * len(self.file.loc[:, [FRC_IN]]),200)
         nan_rows_watt = self.file.loc[self.file[WATTEMP].isnull()]
 
@@ -169,9 +164,7 @@ class SWOT_ML(object):
                     collection_time = np.append(collection_time, 1)
                 else:
                     collection_time = np.append(collection_time, 0)
-
                 end = datetime.datetime.strptime(end, self.xl_dateformat)
-
             durations.append((end - start).total_seconds())
             all_dates.append(datetime.datetime.strftime(start, self.xl_dateformat))
 
@@ -195,7 +188,7 @@ class SWOT_ML(object):
             "time of collection (0=AM, 1=PM)",
         ]
         self.predictors = pd.DataFrame(predictors)
-        if len(nan_rows_watt) < drop_threshold:
+        if len(self.file.loc[:, [FRC_IN]])-len(nan_rows_watt) > drop_threshold:
             self.predictors[WATTEMP] = self.file[WATTEMP]
             self.var_names.append("Water Temperature(" + r"$\degree$" + "C)")
             self.average_case_wattemp = np.median(self.file[WATTEMP].dropna().to_numpy())
@@ -209,7 +202,7 @@ class SWOT_ML(object):
                     self.file[WATTEMP].dropna().to_numpy(), 5
                 )
 
-        if len(nan_rows_cond) < drop_threshold:
+        if len(self.file.loc[:, [FRC_IN]])-len(nan_rows_cond) > drop_threshold:
             self.predictors[COND] = self.file[COND]
             self.var_names.append("EC (" + r"$\mu$" + "s/cm)")
             self.average_case_cond = np.median(self.file[COND].dropna().to_numpy())
