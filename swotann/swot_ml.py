@@ -679,6 +679,7 @@ class SWOT_ML(object):
     def run_swot(
         self, input_file, results_file, report_file, storage_target, usetmpdir=False
     ):
+        storage_target = int(storage_target)
         now = datetime.datetime.now()
         if usetmpdir:
             tmp_dirpath = tempfile.gettempdir()
