@@ -677,8 +677,13 @@ class SWOT_ML(object):
             self.file.drop(self.file.loc[matches].index, inplace=True)
 
     def run_swot(
-        self, input_file, results_file, report_file, storage_target, usetmpdir=False
+        self, input_file, results_file, storage_target, usetmpdir=False
     ):
+        global FRC_IN
+        global FRC_OUT
+        global WATTEMP
+        global COND
+        
         storage_target = int(storage_target)
         now = datetime.datetime.now()
         if usetmpdir:

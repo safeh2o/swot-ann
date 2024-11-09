@@ -14,10 +14,9 @@ tf.random.set_seed(0)
 def run_swot():
     SWOT_net = SWOT_ML()
     input_file = sys.argv[1]
-    results_file = sys.argv[3]
-    report_file = sys.argv[4]
-    storage_target = sys.argv[5]
-    SWOT_net.run_swot(input_file, results_file, report_file, storage_target)
+    results_file = sys.argv[2]
+    storage_target = sys.argv[3]
+    SWOT_net.run_swot(input_file, results_file, storage_target)
 
 
 if __name__ == "__main__":
