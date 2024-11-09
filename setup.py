@@ -17,12 +17,12 @@ reqs = [
     "protobuf==3.20.0",
     "statsmodels==0.14.2",
     "quadprog==0.1.12",
-    "cvxopt==1.3.2"
+    "cvxopt==1.3.2",
 ]
 
 setuptools.setup(
     name="swot-ann-safeh2o",
-    version="3.0.0",
+    version="3.0.1",
     author="SafeH2O",
     author_email="support@safeh2o.app",
     description="SWOT ANN Project",
