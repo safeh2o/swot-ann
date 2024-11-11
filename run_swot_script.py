@@ -1,11 +1,13 @@
-import sys
-from swotann.swot_ml import SWOT_ML
-#import tensorflow as tf
-#tf.keras.utils.set_random_seed(0)
+# import tensorflow as tf
+# tf.keras.utils.set_random_seed(0)
 import random
+import sys
+
 import numpy as np
 import tensorflow as tf
-import keras
+
+from swotann.swot_ml import SWOT_ML
+
 random.seed(0)
 np.random.seed(0)
 tf.random.set_seed(0)

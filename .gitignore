@@ -133,5 +133,4 @@ lxenv
 /env/
 /winenv/
 tests/out/
-.vscode/
 model_retraining/*/
