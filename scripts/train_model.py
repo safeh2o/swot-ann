@@ -1,7 +1,7 @@
 import sys
-from swotann.nnetwork import NNetwork
+from swotann.swot_ml import SWOT_ML
 
-SWOT_net = NNetwork()
+SWOT_net = SWOT_ML()
 filename = sys.argv[1]
 output_filename = sys.argv[2]
 
