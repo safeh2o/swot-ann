@@ -14,7 +14,7 @@ reqs = [
     "yattag==1.14",
     "pillow==9.2.0",
     "pytest==7.1.2",
-    "protobuf==3.20.0",
+    "protobuf==4.25.8",
     "statsmodels==0.14.2",
     "quadprog==0.1.12",
     "cvxopt==1.3.2",
