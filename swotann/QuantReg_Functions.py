@@ -1,5 +1,8 @@
 import keras
-import keras.backend as K
+
+import tensorflow as tf
+from tensorflow import keras
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -13,37 +16,37 @@ from matplotlib import pyplot as plt
 def pinball_loss_keras(q):
     def loss(y_true,y_pred):
         e=(y_true-y_pred)
-        return K.mean(K.maximum(q*e,(q-1)*e))
+        return tf.reduce_mean(tf.maximum(q*e,(q-1)*e))
     return loss
 
 def smoothed_pinball_keras(q,eps):
     def loss(y_true,y_pred):
         e=y_true-y_pred
-        esq=K.square(e)/(2*eps)
-        elin=tf.subtract(K.abs(e),0.5*eps)
-        eesq=esq*K.cast(K.less(K.abs(e),eps),'float32')
-        eelin=elin*K.cast(K.greater_equal(K.abs(e),eps),'float32')
+        esq=tf.square(e)/(2*eps)
+        elin=tf.subtract(tf.abs(e),0.5*eps)
+        eesq=esq*tf.cast(tf.less(tf.abs(e),eps),'float32')
+        eelin=elin*tf.cast(tf.greater_equal(tf.abs(e),eps),'float32')
         ee=eelin+eesq
-        return K.mean(tf.where(e>0,q*ee,(1-q)*ee))
+        return tf.reduce_mean(tf.where(e>0,q*ee,(1-q)*ee))
     return loss
 
 def simultaneous_loss_keras(quantiles,eps):
     def loss(y_true,y_pred):#rewrite loss hear as the mean of the means
         e=(y_true-y_pred)
-        esq = K.square(e) / (2 * eps)
-        elin = tf.subtract(K.abs(e), 0.5 * eps)
-        eesq = esq * K.cast(K.less(K.abs(e), eps), 'float32')
-        eelin = elin * K.cast(K.greater_equal(K.abs(e), eps), 'float32')
+        esq = tf.square(e) / (2 * eps)
+        elin = tf.subtract(tf.abs(e), 0.5 * eps)
+        eesq = esq * tf.cast(tf.less(tf.abs(e), eps), 'float32')
+        eelin = elin * tf.cast(tf.greater_equal(tf.abs(e), eps), 'float32')
         ee = eelin + eesq
         e_upper=ee*quantiles
         e_lower=ee*(1-quantiles)
         q_e=tf.where(e>0,e_upper,e_lower)
 
-        q_err=K.mean(q_e,axis=0)#Should remove the N dimension, reduce to a mean per quantile
-        sum_q_err=K.mean(q_err)
+        q_err=tf.reduce_mean(q_e,axis=0)#Should remove the N dimension, reduce to a mean per quantile
+        sum_q_err=tf.reduce_mean(q_err)
         return sum_q_err
 
-        #return K.mean(K.mean(K.maximum(quantiles*e,(quantiles-1)*e,axis=0),axis=0)) #
+        #return tf.reduce_mean(tf.reduce_mean(tf.maximum(quantiles*e,(quantiles-1)*e,axis=0),axis=0)) #
 
     return loss
 
