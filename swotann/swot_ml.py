@@ -287,7 +287,8 @@ class SWOT_ML(object):
         x_norm = self.predictors_scaler.transform(self.predictors)
         t_norm = self.targets_scaler.transform(self.targets)
 
-        self.model.fit(x_norm,t_norm.flatten())
+        # self.model.fit(x_norm,t_norm.flatten())
+        self.model.fit(x_norm,t_norm)
         self.calibration_predictions = self.model.predict(x_norm)
         for key in self.calibration_predictions.keys():
             self.calibration_predictions[key] = self.targets_scaler.inverse_transform(self.calibration_predictions[key].reshape(-1, 1)).flatten()

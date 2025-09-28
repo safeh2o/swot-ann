@@ -4,18 +4,19 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 reqs = [
-    "tensorflow-macos==2.9.0;platform_system=='Darwin'",
-    "tensorflow==2.9.0;platform_system!='Darwin'",
-    "numpy==1.22.3",
-    "matplotlib==3.5.2",
-    "pandas==1.4.3",
-    "scikit-learn==1.0.2",
-    "xlrd==1.2.0",
-    "yattag==1.14",
-    "pillow==9.2.0",
-    "pytest==7.1.2",
-    "protobuf==3.20.0",
+    "tensorflow-macos==2.16.2;platform_system=='Darwin'",
+    "tensorflow==2.16.2;platform_system!='Darwin'",
+    "numpy==1.26.4",
+    "matplotlib==3.8.3",
+    "pandas==2.2.1",
+    "scikit-learn==1.7.1",
+    "xlrd==2.0.1",
+    "yattag==1.15.1",
+    "pillow==10.2.0",
+    "pytest==8.0.2",
+    "protobuf==4.25.3",
     "statsmodels==0.14.2",
+    "scipy==1.12.0",  # Added specific scipy version compatible with statsmodels
     "quadprog==0.1.12",
     "cvxopt==1.3.2",
 ]
@@ -38,6 +39,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=["swotann"],
-    python_requires=">=3.10",
+    python_requires=">=3.12",
     install_requires=reqs,
 )
