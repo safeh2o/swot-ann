@@ -13,7 +13,7 @@ reqs = [
     "xlrd==1.2.0",
     "yattag==1.14",
     "pillow==9.2.0",
-    "pytest==7.1.2",
+    "pytest==9.0.3",
     "protobuf==3.20.0",
     "statsmodels==0.14.2",
     "quadprog==0.1.12",
